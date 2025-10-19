@@ -1,0 +1,259 @@
+:root {
+    --green: #006633;
+    --light-green: #009944;
+    --yellow: #f9e11a;
+    --white: #fff;
+    --gray: #f6f7f9;
+    --shadow: 0 8px 32px rgba(0,0,0,0.10);
+}
+body {
+    font-family: 'Noto Sans SC', 'Microsoft YaHei', 'Segoe UI', Arial, sans-serif;
+    margin: 0;
+    background: var(--gray);
+    color: #222;
+}
+header {
+    background: linear-gradient(90deg, var(--green) 0%, var(--light-green) 100%);
+    color: var(--white);
+    padding: 36px 0 18px 0;
+    text-align: center;
+    letter-spacing: 2px;
+    box-shadow: var(--shadow);
+    position: relative;
+}
+header::after {
+    content: "";
+    display: block;
+    width: 120px;
+    height: 4px;
+    background: linear-gradient(90deg, var(--yellow) 0%, var(--light-green) 100%);
+    margin: 18px auto 0 auto;
+    border-radius: 2px;
+}
+nav {
+    background: var(--light-green);
+    display: flex;
+    justify-content: center;
+    box-shadow: 0 2px 12px #e0e0e0;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+nav .tab {
+    color: var(--white);
+    padding: 18px 40px;
+    cursor: pointer;
+    font-size: 20px;
+    border: none;
+    background: none;
+    outline: none;
+    transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    font-family: inherit;
+    position: relative;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+}
+nav .tab.active, nav .tab:hover {
+    background: var(--yellow);
+    color: var(--green);
+    font-weight: bold;
+    box-shadow: 0 4px 16px #e0e0e0;
+}
+nav .tab.active::after {
+    content: "";
+    display: block;
+    margin: 6px auto 0 auto;
+    width: 32px;
+    height: 4px;
+    background: var(--green);
+    border-radius: 2px;
+    animation: tab-underline 0.4s;
+}
+@keyframes tab-underline {
+    from { width: 0; opacity: 0; }
+    to { width: 32px; opacity: 1; }
+}
+main {
+    max-width: 1000px;
+    margin: 40px auto;
+    background: var(--white);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    padding: 48px 56px;
+    min-height: 520px;
+    animation: fadein 0.7s;
+}
+@keyframes fadein {
+    from { opacity: 0; transform: translateY(40px);}
+    to { opacity: 1; transform: none;}
+}
+section { display: none; }
+section.active { display: block; }
+h2 {
+    color: var(--green);
+    font-size: 2.1em;
+    margin-top: 0;
+    letter-spacing: 1px;
+}
+.highlight {
+    color: var(--yellow);
+    background: var(--green);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-weight: bold;
+}
+.card-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px;
+    margin: 32px 0;
+}
+.card {
+    background: linear-gradient(120deg, #f9fbe7 0%, #e0f2f1 100%);
+    border-radius: 12px;
+    box-shadow: 0 2px 12px #e0e0e0;
+    padding: 28px 24px;
+    flex: 1 1 260px;
+    min-width: 220px;
+    max-width: 320px;
+    transition: transform 0.2s;
+}
+.card:hover {
+    transform: translateY(-8px) scale(1.03);
+    box-shadow: 0 8px 32px #b2dfdb;
+}
+.card-title {
+    color: var(--green);
+    font-size: 1.2em;
+    margin-bottom: 8px;
+}
+.card-desc {
+    color: #444;
+    font-size: 1em;
+}
+/* 邮资计算器样式 */
+.calc-form {
+    background: #f1f8e9;
+    border-radius: 12px;
+    padding: 32px 24px;
+    box-shadow: 0 2px 12px #e0e0e0;
+    max-width: 480px;
+    margin: 0 auto 32px auto;
+}
+.calc-form label {
+    font-weight: bold;
+    color: var(--green);
+    margin-top: 12px;
+    display: block;
+}
+.calc-form input, .calc-form select {
+    padding: 10px;
+    font-size: 17px;
+    margin: 8px 0 18px 0;
+    border-radius: 6px;
+    border: 1px solid #b2dfdb;
+    width: 100%;
+    box-sizing: border-box;
+}
+.calc-form button {
+    display: block;
+    margin: 18px auto 0 auto; /* 上间距18px，左右自动居中 */
+    background: var(--green);
+    color: var(--yellow);
+    border: none;
+    padding: 12px 32px;
+    border-radius: 6px;
+    font-size: 18px;
+    cursor: pointer;
+    margin-top: 8px;
+    font-weight: bold;
+    transition: background 0.2s, color 0.2s;
+}
+.calc-form button:hover {
+    background: var(--yellow);
+    color: var(--green);
+}
+#result {
+    margin-top: 18px;
+    font-size: 20px;
+    font-weight: bold;
+    color: var(--green);
+    text-align: center;
+}
+.fee-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 24px;
+    background: #f9fbe7;
+    border-radius: 8px;
+    overflow: hidden;
+    font-size: 12px;
+}
+.fee-table th, .fee-table td {
+    border: 1px solid #b2dfdb;
+    padding: 6px 8px;
+    text-align: center;
+}
+.fee-table th {
+    background: #e0f2f1;
+    color: var(--green);
+}
+/* 响应式 */
+@media (max-width: 900px) {
+    main { padding: 18px 2vw; }
+    .card-list { flex-direction: column; gap: 18px;}
+}
+@media (max-width: 600px) {
+    nav .tab { padding: 10px 8px; font-size: 15px; }
+    main { padding: 8px 2vw; }
+    .calc-form { padding: 18px 6px; }
+}
+footer {
+    text-align: center;
+    color: #888;
+    padding: 32px 0 18px 0;
+    background: var(--gray);
+    font-size: 16px;
+    margin-top: 40px;
+    letter-spacing: 1px;
+}
+a {
+    color: var(--green);
+    text-decoration: underline;
+    transition: color 0.2s;
+}
+a:hover {
+    color: var(--yellow);
+}
+
+.download-list {
+    font-size: 1.1em;
+    list-style-type: disc;
+    padding-left: 24px;
+    margin-top: 16px;
+}
+
+/* 下载列表样式 */
+.download-list li {
+    margin-bottom: 12px;      /* 每行之间的间隔 */
+    line-height: 1.7em;       /* 控制文字行距 */
+}
+
+.download-list a {
+    color: #00754b;           /* 邮政绿色风格 */
+    text-decoration: none;
+    transition: color 0.2s ease, padding-left 0.2s ease;
+}
+
+.download-list a:hover {
+    color: #009f60;            /* 悬停时更亮的绿色 */
+    padding-left: 6px;         /* 悬停时轻微右移 */
+}
+
+.download-note {
+    margin-top: 28px;
+    color: #777;
+    font-size: 0.95em;
+    font-style: italic;
+}

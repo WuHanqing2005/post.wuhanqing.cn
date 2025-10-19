@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>邮资计算 - Daniel_清寒的邮政小站</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <h1 style="font-size:2.6em;letter-spacing:3px;">Daniel_清寒的邮政小站</h1>
+        <div style="font-size:22px;letter-spacing:1px;margin-top:8px;">中国邮政爱好者的家园</div>
+    </header>
+    <nav>
+        <a class="tab" href="index.html">主页</a>
+        <a class="tab active" href="calculator.html">邮资计算</a>
+        <a class="tab" href="about.html">关于邮政</a>
+        <a class="tab" href="download.html">资料下载</a>
+        <a class="tab" href="contact.html">联系我们</a>
+    </nav>
+    <main>
+        <section id="calculator" class="active">
+            <h2>中国邮政全业务资费计算器</h2>
+            <div class="calc-form">
+                <form id="postageForm" onsubmit="return false;">
+                    <label for="service">业务类型：</label>
+                    <select id="service" required>
+                        <option value="domestic_letter">国内信函</option>
+                        <option value="domestic_printed">国内印刷品</option>
+                        <option value="domestic_postcard">国内明信片</option>
+                        <option value="domestic_registered">国内挂号信</option>
+                        <option value="domestic_receipt">国内回执</option>
+                        <option value="domestic_insured">国内保价</option>
+                        <option value="hkmo_letter">港澳台信函</option>
+                        <option value="hkmo_printed">港澳台印刷品</option>
+                        <option value="hkmo_postcard">港澳台明信片</option>
+                        <option value="hkmo_registered">港澳台挂号</option>
+                        <option value="hkmo_small_packet">港澳台小包</option>
+                        <option value="intl_air_letter">国际航空信函</option>
+                        <option value="intl_air_printed">国际航空印刷品</option>
+                        <option value="intl_air_postcard">国际航空明信片</option>
+                        <option value="intl_registered">国际挂号</option>
+                        <option value="intl_insured">国际保价函件</option>
+                        <option value="intl_small_packet">国际小包</option>
+                    </select>
+                    <label for="region">寄达地：</label>
+                    <select id="region" required>
+                        <option value="local">本地</option>
+                        <option value="domestic">国内</option>
+                        <option value="hkmo">港澳台</option>
+                        <option value="international">国际</option>
+                    </select>
+                    <div id="groupDiv" style="display:none;">
+                        <label for="group">国际分组：</label>
+                        <select id="group">
+                            <option value="1">第1组（亚洲邻近）</option>
+                            <option value="2">第2组（亚洲其他/部分欧美澳）</option>
+                            <option value="3">第3组（其他欧美澳非）</option>
+                            <option value="4">第4组（美洲其他/非洲/大洋洲其他）</option>
+                        </select>
+                        <div style="font-size:13px;color:#888;margin-top:4px;">
+                            <b>分组说明：</b><br>
+                            <span style="color:#666;">第1组：亚洲邻近国家（如朝鲜、日本、韩国等）<br>
+                            第2组：其他亚洲、部分欧洲、美加澳新（如德国、美国、澳大利亚等）<br>
+                            第3组：其他欧洲、美洲、大洋洲、非洲（如俄罗斯、巴西、南非等）<br>
+                            第4组：美洲其他、非洲、大洋洲其他（如秘鲁、尼日利亚、斐济等）</span>
+                        </div>
+                    </div>
+                    <div id="insuredDiv" style="display:none;">
+                        <label for="insuredAmount">保价金额（元）：</label>
+                        <input type="number" id="insuredAmount" min="1" placeholder="请输入保价金额">
+                    </div>
+                    <label for="weight">重量（克）：</label>
+                    <input type="number" id="weight" min="1" required placeholder="请输入邮件重量">
+                    <button type="button" onclick="calculatePostage()">计算资费</button>
+                </form>
+                <div id="result"></div>
+            </div>
+            <table class="fee-table">
+                <tr>
+                    <th>业务类型</th>
+                    <th>本地/国内</th>
+                    <th>港澳台</th>
+                    <th>国际</th>
+                    <th>计费标准说明</th>
+                </tr>
+                <tr>
+                    <td>信函</td>
+                    <td>
+                        本地：100克及以内每20克0.8元，超出部分每100克1.2元<br>
+                        国内：100克及以内每20克1.2元，超出部分每100克2元
+                    </td>
+                    <td>
+                        20克及以下1.5元<br>
+                        21-50克2.8元<br>
+                        51-100克4元<br>
+                        101-250克8.5元<br>
+                        251-500克16.7元<br>
+                        501-1000克31.7元<br>
+                        1001-2000克55.8元
+                    </td>
+                    <td>
+                        按分组计费<br>
+                        20克及以下：第1组5元，第2组5.5元，第3组6元，第4组7元<br>
+                        续重每10克：第1组1元，第2组1.5元，第3组1.8元，第4组2.3元
+                    </td>
+                    <td>
+                        不足计费单位按一单位计；最大重量2000克
+                    </td>
+                </tr>
+                <tr>
+                    <td>印刷品</td>
+                    <td>
+                        本地：100克及以内0.8元，超出部分每100克0.2元<br>
+                        国内：100克及以内1.2元，超出部分每100克0.4元
+                    </td>
+                    <td>
+                        20克及以下3.5元<br>
+                        续重每10克1.3元
+                    </td>
+                    <td>
+                        按分组计费<br>
+                        20克及以下：第1组4.5元，第2组5元，第3组6元<br>
+                        续重每10克：第1组2.2元，第2组2.5元，第3组2.8元
+                    </td>
+                    <td>
+                        书籍、杂志等；最大重量2000克
+                    </td>
+                </tr>
+                <tr>
+                    <td>明信片</td>
+                    <td>每件0.8元</td>
+                    <td>每件3.5元</td>
+                    <td>每件5元</td>
+                    <td>标准明信片；最大重量20克</td>
+                </tr>
+                <tr>
+                    <td>挂号</td>
+                    <td>每件3元（加在信函/印刷品基础上）</td>
+                    <td>每件16元</td>
+                    <td>每件16元</td>
+                    <td>可查询投递状态</td>
+                </tr>
+                <tr>
+                    <td>回执</td>
+                    <td>每件3元</td>
+                    <td>-</td>
+                    <td>每件5元</td>
+                    <td>投递回执服务</td>
+                </tr>
+                <tr>
+                    <td>保价</td>
+                    <td>100元及以内1元，超出部分1%</td>
+                    <td>每保200元3元</td>
+                    <td>每保200元3元</td>
+                    <td>按保价金额计费</td>
+                </tr>
+                <tr>
+                    <td>小包</td>
+                    <td>-</td>
+                    <td>
+                        100克及以下15元<br>
+                        续重每100克13元
+                    </td>
+                    <td>
+                        按分组计费<br>
+                        100克及以下：第1组25元，第2组30元，第3组35元，第4组40元<br>
+                        续重每100克：第1组23元，第2组27元，第3组33元，第4组38元
+                    </td>
+                    <td>最大重量2000克</td>
+                </tr>
+                <tr>
+                    <td>印刷品专袋</td>
+                    <td>-</td>
+                    <td>
+                        5000克及以下180元<br>
+                        续重每1000克45元
+                    </td>
+                    <td>
+                        按分组计费<br>
+                        5000克及以下：第1组485元，第2组610元，第3组730元<br>
+                        续重每1000克：第1组100元，第2组120元，第3组145元
+                    </td>
+                    <td>专用于大量印刷品寄递</td>
+                </tr>
+                <tr>
+                    <td>航空邮简</td>
+                    <td>-</td>
+                    <td>每件1.8元</td>
+                    <td>每件5.5元</td>
+                    <td>仅限国际/港澳台</td>
+                </tr>
+                <tr>
+                    <td>盲人邮件</td>
+                    <td>免费</td>
+                    <td>免费</td>
+                    <td>基本资费免收，按每10克收取航空运费（国际：第1组0.6元，第2组0.8元，第3组1元）</td>
+                    <td>专为盲人寄递</td>
+                </tr>
+                <tr>
+                    <td>手续费</td>
+                    <td>每件18元</td>
+                    <td>每件18元</td>
+                    <td>每件18元</td>
+                    <td>部分特殊业务收取</td>
+                </tr>
+                <tr>
+                    <td>挂号专袋</td>
+                    <td>-</td>
+                    <td>每袋80元</td>
+                    <td>每袋80元</td>
+                    <td>印刷品专袋挂号服务</td>
+                </tr>
+                <tr>
+                    <td>回信券</td>
+                    <td>-</td>
+                    <td>-</td>
+                    <td>每枚12元</td>
+                    <td>国际业务专用</td>
+                </tr>
+            </table>
+            <div style="margin-top:24px;color:#888;font-size:15px;">
+                * 以上资费仅供参考，具体以中国邮政官网为准。<br>
+                <b>国际分组详细国家请参考中国邮政官网或本页分组说明。</b>
+            </div>
+        </section>
+    </main>
+    <footer>
+        &copy; 2025 Daniel_清寒的邮政小站 | 本站非中国邮政官方网站，仅供邮政爱好者学习与交流
+    </footer>
+    <script src="main.js"></script>
+</body>
+</html>
