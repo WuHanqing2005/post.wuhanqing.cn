@@ -39,7 +39,7 @@ project/
 1. 将项目文件下载或克隆至本地：
    ```bash
    git clone https://github.com/yourname/poststation.git
-````
+   ```
 
 2. 使用浏览器直接打开 `index.html` 即可访问网站。
 3. 若需上线，可部署至：
@@ -60,5 +60,3 @@ project/
 ---
 
 © 2025 Daniel_清寒的邮政小站 | 由邮政爱好者倾情制作 ❤️
-
-```
