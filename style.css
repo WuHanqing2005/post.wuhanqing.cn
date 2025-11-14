@@ -257,3 +257,30 @@ a:hover {
     font-size: 0.95em;
     font-style: italic;
 }
+
+/* ****** 新增：用于修正附加业务复选框的样式 ****** */
+.addons-group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 8px 0;
+}
+
+.addon-item {
+    display: flex;
+    align-items: center;
+    margin-right: 15px; /* 复选框之间的右边距 */
+    margin-bottom: 8px;
+}
+
+.addon-item input[type="checkbox"] {
+    width: auto; /* 覆盖.calc-form input的100%宽度 */
+    margin: 0 5px 0 0; /* 上 右 下 左 */
+}
+
+.addon-item label {
+    font-weight: normal; /* 覆盖.calc-form label的粗体 */
+    color: #333; /* 普通文字颜色 */
+    margin-top: 0; /* 覆盖.calc-form label的上边距 */
+    cursor: pointer;
+}
