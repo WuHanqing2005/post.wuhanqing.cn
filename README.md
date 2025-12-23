@@ -11,7 +11,7 @@
 |------|-----------|
 | `index.html` | 网站主页，展示站点介绍与主要功能模块 |
 | `calculator.html` | 邮资计算器，支持国内、港澳台、国际多种邮政业务资费计算 |
-| `about.html` | 关于邮政，介绍邮政基础知识 |
+| `makecode.html` | 关于邮政，介绍邮政基础知识 |
 | `download.html` | 提供邮政资料、邮票目录、业务手册下载 |
 | `contact.html` | 联系方式与交流信息 |
 
@@ -24,7 +24,7 @@
 project/
 ├── index.html              # 主页
 ├── calculator.html         # 邮资计算页面
-├── about.html              # 关于邮政
+├── makecode.html           # 生成条码
 ├── download.html           # 资料下载
 ├── contact.html            # 联系我们
 ├── style.css               # 全站样式文件

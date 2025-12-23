@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>邮编查询 - Daniel_清寒的邮政小站</title>
+    <link rel="icon" type="image/svg+xml" href="mail.svg">
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <h1 style="font-size:2.6em;letter-spacing:3px;">Daniel_清寒的邮政小站</h1>
+        <div style="font-size:22px;letter-spacing:1px;margin-top:8px;">中国邮政爱好者的家园</div>
+    </header>
+    <nav>
+        <a class="tab" href="index.html">小站主页</a>
+        <a class="tab" href="calculator.html">邮资计算</a>
+        <a class="tab" href="makecode.html">打印条码</a>
+        <a class="tab active" href="postcode.html">邮编查询</a>
+        <a class="tab" href="download.html">资料下载</a>
+        <a class="tab" href="contact.html">联系我们</a>
+    </nav>
+    <main>
+        <section id="postcode" class="active">
+            <h2>中国邮政编码查询</h2>
+            
+            <!-- 模式切换选项卡 -->
+            <div class="mode-tabs">
+                <button id="codeToAddressBtn" class="mode-tab active" onclick="switchQueryMode('codeToAddress')">邮编查地址</button>
+                <button id="addressToCodeBtn" class="mode-tab" onclick="switchQueryMode('addressToCode')">地址查邮编</button>
+            </div>
+
+            <!-- 模式1：邮编查地址 -->
+            <div id="codeToAddressMode" class="mode-container">
+                <div class="barcode-form">
+                    <label for="postcodeInput">输入邮政编码：</label>
+                    <input type="text" id="postcodeInput" placeholder="请输入6位邮政编码，例如：010010" maxlength="6">
+                    <button id="queryCodeBtn" class="confirm-btn">查询</button>
+                </div>
+            </div>
+
+            <!-- 模式2：地址查邮编 -->
+            <div id="addressToCodeMode" class="mode-container" style="display: none;">
+                <div class="barcode-form">
+                    <label>选择省市（可选，推荐加速查询）：</label>
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px;">
+                      <select id="provinceSelect" style="min-width:160px;"><option value="">请选择省份</option></select>
+                      <select id="citySelect" style="min-width:160px;"><option value="">请选择城市</option></select>
+                    </div>
+                    <label for="addressInput">输入地址关键词：</label>
+                    <input type="text" id="addressInput" placeholder="例如：桂林路100号 或 师范大学邮政所">
+                    <div style="font-size:12px; color:#666; margin-top:8px; text-align:left;">
+                        💡 支持智能分词：输入"辽宁省沈阳市和睦路"会自动识别为"辽宁省"+"沈阳市"+"和睦路"<br>
+                      ⚖️ 权重匹配：命中的字段越多、越精确，结果排序越靠前
+                    </div>
+                    <button id="queryAddressBtn" class="confirm-btn">查询</button>
+                </div>
+            </div>
+
+            <!-- 查询结果显示区 -->
+            <div id="queryResult" class="query-result" style="display: none;">
+                <div id="resultContent"></div>
+            </div>
+        </section>
+    </main>
+    <footer>
+        <p>
+            本站访客数 <span id="busuanzi_value_site_uv"></span> 人次
+            <span style="margin: 0 10px;">|</span>
+
+            本站总访问量 <span id="busuanzi_value_site_pv"></span> 次
+        </p>
+
+        &copy; 2025 Daniel_清寒的邮政小站 | 本站非中国邮政官方网站，仅供邮政爱好者学习与交流
+    </footer>
+
+<!-- 不蒜子网站访问量统计脚本 -->
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+<!-- 省市索引与城市前缀映射（用于高效缩小查询范围） -->
+<script src="code/province_city_list.js"></script>
+<script src="code/province_city_prefixes.js"></script>
+
+<script>
+// ====== 模式切换函数 ======
+function switchQueryMode(mode) {
+  const codeToAddressMode = document.getElementById('codeToAddressMode');
+  const addressToCodeMode = document.getElementById('addressToCodeMode');
+  const codeToAddressBtn = document.getElementById('codeToAddressBtn');
+  const addressToCodeBtn = document.getElementById('addressToCodeBtn');
+  
+  if (mode === 'codeToAddress') {
+    codeToAddressMode.style.display = 'block';
+    addressToCodeMode.style.display = 'none';
+    codeToAddressBtn.classList.add('active');
+    addressToCodeBtn.classList.remove('active');
+  } else {
+    codeToAddressMode.style.display = 'none';
+    addressToCodeMode.style.display = 'block';
+    codeToAddressBtn.classList.remove('active');
+    addressToCodeBtn.classList.add('active');
+  }
+  
+  // 隐藏结果区域
+  document.getElementById('queryResult').style.display = 'none';
+}
+
+// ====== 邮编查地址 ======
+async function queryByPostcode() {
+  const postcode = document.getElementById('postcodeInput').value.trim();
+  const resultArea = document.getElementById('queryResult');
+  const resultContent = document.getElementById('resultContent');
+  
+  if (!postcode || !/^\d{6}$/.test(postcode)) {
+    alert('请输入有效的6位邮政编码');
+    return;
+  }
+  
+  resultArea.style.display = 'block';
+  resultContent.innerHTML = '<p style="text-align:center; color:#666;">正在查询...</p>';
+  
+  try {
+    // 尝试加载对应的JSON文件
+    const response = await fetch(`code/${postcode}.json`);
+    
+    if (!response.ok) {
+      resultContent.innerHTML = `<p style="text-align:center; color:#f39c12;">❌ 未找到邮编 <strong>${postcode}</strong> 的相关信息</p>`;
+      return;
+    }
+    
+    const data = await response.json();
+    
+    if (!data || data.length === 0) {
+      resultContent.innerHTML = `<p style="text-align:center; color:#f39c12;">❌ 邮编 <strong>${postcode}</strong> 暂无详细地址信息</p>`;
+      return;
+    }
+    
+    // 显示结果
+    let html = `<h3 style="color:var(--green); margin-top:0;">邮编 ${postcode} 对应的邮政网点：</h3>`;
+    html += '<div style="max-height:500px; overflow-y:auto;">';
+    
+    data.forEach((item, index) => {
+      html += `
+        <div style="background:#f9fbe7; border-radius:8px; padding:16px; margin-bottom:12px; border-left:4px solid var(--green);">
+          <div style="font-size:18px; font-weight:bold; color:var(--green); margin-bottom:8px;">
+            ${index + 1}. ${item.name}
+          </div>
+          <div style="margin-bottom:4px;">
+            <strong>省市区：</strong>${item.province} ${item.city} ${item.area}
+          </div>
+          <div style="margin-bottom:4px;">
+            <strong>详细地址：</strong>${item.address}
+          </div>
+          <div style="margin-bottom:4px;">
+            <strong>联系电话：</strong>${item.phone}
+          </div>
+          <div>
+            <strong>邮政编码：</strong><span style="color:var(--light-green); font-size:18px; font-weight:bold;">${item.code}</span>
+          </div>
+        </div>
+      `;
+    });
+    
+    html += '</div>';
+    resultContent.innerHTML = html;
+    
+  } catch (error) {
+    console.error('查询出错:', error);
+    resultContent.innerHTML = `<p style="text-align:center; color:#e74c3c;">❌ 查询出错，请稍后重试</p>`;
+  }
+}
+
+// ====== 省份到邮编前缀的映射 ======
+const provinceToPostcodePrefix = {
+  '北京': ['10', '11', '12'],
+  '天津': ['30'],
+  '河北': ['05', '06', '07'],
+  '山西': ['03', '04'],
+  '内蒙古': ['01', '02'],
+  '辽宁': ['11', '12', '13'],
+  '吉林': ['13', '14'],
+  '黑龙江': ['15', '16', '17'],
+  '上海': ['20'],
+  '江苏': ['21', '22', '23', '24', '25'],
+  '浙江': ['31', '32', '33'],
+  '安徽': ['23', '24', '25', '26', '27'],
+  '福建': ['35', '36', '37'],
+  '江西': ['33', '34'],
+  '山东': ['25', '26', '27', '28'],
+  '河南': ['45', '46', '47', '48', '49'],
+  '湖北': ['43', '44'],
+  '湖南': ['41', '42', '43'],
+  '广东': ['51', '52', '53', '54'],
+  '广西': ['53', '54', '55'],
+  '海南': ['57'],
+  '重庆': ['40', '41'],
+  '四川': ['61', '62', '63', '64'],
+  '贵州': ['55', '56', '57'],
+  '云南': ['65', '66', '67'],
+  '西藏': ['85', '86'],
+  '陕西': ['71', '72'],
+  '甘肃': ['73', '74'],
+  '青海': ['81', '82'],
+  '宁夏': ['75'],
+  '新疆': ['83', '84']
+};
+
+// ====== 常用地名缩写映射 ======
+const abbreviationMap = {
+  '师大': ['师范大学', '师大', '师范'],
+  '交大': ['交通大学', '交大'],
+  '理工': ['理工大学', '理工学院', '理工'],
+  '财大': ['财经大学', '财大'],
+  '医大': ['医科大学', '医学院', '医大'],
+  '农大': ['农业大学', '农大'],
+  '工大': ['工业大学', '工大'],
+  '科大': ['科技大学', '科大'],
+  '邮电': ['邮电大学', '邮电学院', '邮电'],
+  '民大': ['民族大学', '民大'],
+  '体院': ['体育学院', '体院'],
+  '音院': ['音乐学院', '音院'],
+  '美院': ['美术学院', '美院']
+};
+
+// ====== 省份、城市、区域关键词列表 ======
+const provinceKeywords = ['北京', '天津', '河北', '山西', '内蒙古', '辽宁', '吉林', '黑龙江', 
+  '上海', '江苏', '浙江', '安徽', '福建', '江西', '山东', '河南', '湖北', '湖南', 
+  '广东', '广西', '海南', '重庆', '四川', '贵州', '云南', '西藏', '陕西', '甘肃', 
+  '青海', '宁夏', '新疆'];
+
+// 使用外部生成的 window.PROVINCE_CITY_PREFIXES 替代手写映射
+
+const citySuffixes = ['市', '地区', '州', '盟'];
+const districtSuffixes = ['区', '县', '市', '旗'];
+
+// ====== 智能分词函数 ======
+function smartSegmentation(input) {
+  console.log('📝 开始分词，输入:', input);
+  
+  // 先按空格分割
+  const spaceSplit = input.trim().split(/\s+/);
+  
+  // 如果有多个空格分词，直接返回
+  if (spaceSplit.length > 1) {
+    console.log('✅ 空格分词结果:', spaceSplit);
+    return spaceSplit.filter(s => s.length > 0);
+  }
+  
+  // 单个字符串，需要智能分词
+  const text = input.trim();
+  const segments = [];
+  let currentIndex = 0;
+  
+  console.log(`开始解析文本，总长度: ${text.length}`);
+  
+  while (currentIndex < text.length) {
+    let matched = false;
+    const remaining = text.slice(currentIndex);
+    console.log(`当前位置: ${currentIndex}, 剩余文本: "${remaining}"`);
+    
+    // 1. 尝试匹配省份（最长优先）
+    for (const province of provinceKeywords) {
+      const provinceWithSuffix = province + '省';
+      const autonomousRegion = province + '自治区';
+      
+      if (remaining.startsWith(provinceWithSuffix)) {
+        segments.push(provinceWithSuffix);
+        console.log(`  ✅ 匹配省份: ${provinceWithSuffix}`);
+        currentIndex += provinceWithSuffix.length;
+        matched = true;
+        break;
+      } else if (remaining.startsWith(autonomousRegion)) {
+        segments.push(autonomousRegion);
+        console.log(`  ✅ 匹配自治区: ${autonomousRegion}`);
+        currentIndex += autonomousRegion.length;
+        matched = true;
+        break;
+      } else if (remaining.startsWith(province)) {
+        segments.push(province);
+        console.log(`  ✅ 匹配省份(无后缀): ${province}`);
+        currentIndex += province.length;
+        matched = true;
+        break;
+      }
+    }
+    
+    if (matched) continue;
+    
+    // 2. 尝试匹配城市（xx市/xx地区/xx州/xx盟）
+    for (let len = 6; len >= 2; len--) {
+      if (len <= remaining.length) {
+        const candidate = remaining.slice(0, len);
+        const lastChar = candidate[candidate.length - 1];
+        
+        if (citySuffixes.includes(lastChar)) {
+          segments.push(candidate);
+          console.log(`  ✅ 匹配城市: ${candidate}`);
+          currentIndex += len;
+          matched = true;
+          break;
+        }
+      }
+    }
+    
+    if (matched) continue;
+    
+    // 3. 尝试匹配区/县（xx区/xx县）
+    for (let len = 5; len >= 2; len--) {
+      if (len <= remaining.length) {
+        const candidate = remaining.slice(0, len);
+        const lastChar = candidate[candidate.length - 1];
+        
+        if (districtSuffixes.includes(lastChar)) {
+          segments.push(candidate);
+          console.log(`  ✅ 匹配区/县: ${candidate}`);
+          currentIndex += len;
+          matched = true;
+          break;
+        }
+      }
+    }
+    
+    if (matched) continue;
+    
+    // 4. 尝试匹配街道/路（xx路/xx街/xx道）
+    const roadSuffixes = ['路', '街', '道', '巷', '里', '胡同', '大道', '大街'];
+    for (let len = 8; len >= 2; len--) {
+      if (len <= remaining.length) {
+        const candidate = remaining.slice(0, len);
+        
+        if (roadSuffixes.some(suffix => candidate.endsWith(suffix))) {
+          segments.push(candidate);
+          console.log(`  ✅ 匹配道路: ${candidate}`);
+          currentIndex += len;
+          matched = true;
+          break;
+        }
+      }
+    }
+    
+    if (matched) continue;
+    
+    // 5. 如果都不匹配，取2-4个字作为通用词组
+    let foundWord = false;
+    for (let len = 4; len >= 2; len--) {
+      if (len <= remaining.length) {
+        const word = remaining.slice(0, len);
+        segments.push(word);
+        console.log(`  ⚠️ 通用词组: ${word}`);
+        currentIndex += len;
+        foundWord = true;
+        break;
+      }
+    }
+    
+    if (!foundWord) {
+      // 剩余字符少于2个，全部作为一个词
+      if (remaining.length > 0) {
+        segments.push(remaining);
+        console.log(`  ⚠️ 剩余部分: ${remaining}`);
+        currentIndex += remaining.length;
+      }
+      break;
+    }
+  }
+  
+  const result = segments.filter(s => s.length > 0);
+  console.log('✅ 最终分词结果:', result);
+  return result;
+}
+
+// ====== 省市下拉列表初始化 ======
+function initProvinceCityDropdowns() {
+  const provSel = document.getElementById('provinceSelect');
+  const citySel = document.getElementById('citySelect');
+  if (!provSel || !citySel) return;
+
+  const data = (window.PROVINCE_CITY_LIST) || {};
+  // 省份选项
+  provSel.innerHTML = '<option value="">请选择省份</option>' +
+    Object.keys(data).map(p => `<option value="${p}">${p}</option>`).join('');
+
+  // 城市重置
+  const resetCities = () => citySel.innerHTML = '<option value="">请选择城市</option>';
+  resetCities();
+
+  provSel.addEventListener('change', () => {
+    const p = provSel.value;
+    resetCities();
+    if (p && data[p]) {
+      citySel.innerHTML = '<option value="">请选择城市</option>' +
+        data[p].map(c => `<option value="${c}">${c}</option>`).join('');
+    }
+  });
+}
+
+// 名称规范化（去掉常见后缀，便于匹配）
+function canonName(s) {
+  return String(s || '').replace(/(省|市|地区|盟|州|自治州|自治区|特别行政区)$/g, '');
+}
+
+// ====== 扩展搜索关键词（处理缩写） ======
+function expandKeywords(keywords) {
+  const expanded = [];
+  keywords.forEach(keyword => {
+    expanded.push(keyword); // 保留原关键词
+    
+    // 检查是否是已知缩写
+    if (abbreviationMap[keyword]) {
+      expanded.push(...abbreviationMap[keyword]);
+    }
+  });
+  return [...new Set(expanded)]; // 去重
+}
+
+// ====== 计算相关性评分 ======
+function calculateRelevance(item, searchKeywords, expandedKeywords) {
+  let score = 0;
+  
+  // 构建各字段的搜索文本
+  const province = item.province.toLowerCase();
+  const city = item.city.toLowerCase();
+  const area = item.area.toLowerCase();
+  const name = item.name.toLowerCase();
+  const address = item.address.toLowerCase();
+  const fullText = province + city + area + name + address;
+  
+  // 完整地址文本
+  const addressOnly = address;
+  
+  searchKeywords.forEach((keyword, idx) => {
+    const kw = keyword.toLowerCase();
+    
+    // 精确匹配地址字段（最高权重）
+    if (addressOnly.includes(kw)) {
+      score += 100;
+    }
+    
+    // 匹配邮局名称
+    if (name.includes(kw)) {
+      score += 50;
+    }
+    
+    // 匹配区域
+    if (area.includes(kw)) {
+      score += 30;
+    }
+    
+    // 匹配城市
+    if (city.includes(kw)) {
+      score += 20;
+    }
+    
+    // 匹配省份
+    if (province.includes(kw)) {
+      score += 10;
+    }
+    
+    // 匹配扩展关键词（缩写展开）
+    expandedKeywords.forEach(expandedKw => {
+      if (expandedKw !== kw && fullText.includes(expandedKw.toLowerCase())) {
+        score += 40;
+      }
+    });
+  });
+  
+  // 关键词匹配数量加成
+  const matchCount = searchKeywords.filter(kw => 
+    fullText.includes(kw.toLowerCase())
+  ).length;
+  score += matchCount * 15;
+  
+  return score;
+}
+
+// ====== 地址查邮编（智能搜索） ======
+async function queryByAddress() {
+  const keywords = document.getElementById('addressInput').value.trim();
+  const resultArea = document.getElementById('queryResult');
+  const resultContent = document.getElementById('resultContent');
+  
+  if (!keywords) {
+    alert('请输入地址关键词');
+    return;
+  }
+  
+  resultArea.style.display = 'block';
+  resultContent.innerHTML = '<p style="text-align:center; color:#666;">正在智能分词并搜索邮编数据库...<br><span style="font-size:12px; color:#999;">已检查 <span id="searchProgress">0</span> 个邮编</span></p>';
+  
+  try {
+    const results = [];
+
+    // 统一清洗：去掉所有空白字符（含全角空格/nbsp），避免出现“辽宁省 ”这类隐形空格导致匹配失败
+    const normalizeText = (s) => String(s ?? '')
+      .toLowerCase()
+      .replace(/[\s\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]+/g, '');
+    
+    // 智能分词 + 清洗（去掉多余空白）
+    const searchKeywords = smartSegmentation(keywords)
+      .map(k => normalizeText(k))
+      .filter(k => k.length > 0);
+    console.log('🔍 搜索关键词:', searchKeywords);
+    
+    // 扩展搜索关键词（处理缩写）
+    const expandedKeywords = expandKeywords(searchKeywords)
+      .map(k => normalizeText(k))
+      .filter(k => k.length > 0);
+    console.log('📚 扩展关键词:', expandedKeywords);
+    
+    // 智能识别省份/城市，缩小搜索范围（优先使用下拉选择）
+    let targetPrefixes = [];
+    let foundProvince = null;
+    let foundCity = null;
+
+    const provSel = document.getElementById('provinceSelect');
+    const citySel = document.getElementById('citySelect');
+    const selProvince = provSel && provSel.value ? provSel.value : '';
+    const selCity = citySel && citySel.value ? citySel.value : '';
+    const PREFIXES = (window.PROVINCE_CITY_PREFIXES) || {};
+    
+    // 1) 下拉优先
+    if (selProvince && PREFIXES[selProvince]) {
+      if (selCity && PREFIXES[selProvince][selCity]) {
+        targetPrefixes = PREFIXES[selProvince][selCity];
+        foundProvince = selProvince; foundCity = selCity;
+        console.log(`✅ 使用选择的省市: ${selProvince}·${selCity} → 前缀:`, targetPrefixes);
+      } else {
+        // 未选市，聚合该省全部城市的4位前缀
+        targetPrefixes = Object.values(PREFIXES[selProvince]).flat();
+        foundProvince = selProvince;
+        console.log(`✅ 使用选择的省: ${selProvince}（未选市），聚合前缀数量: ${targetPrefixes.length}`);
+      }
+    }
+
+    // 2) 未选择时，从关键词中识别省/市
+    if (targetPrefixes.length === 0) {
+      // 识别省
+      const ALL_PROVS = Object.keys(PREFIXES);
+      for (const kw of searchKeywords) {
+        const kwBase = canonName(kw);
+        const provHit = ALL_PROVS.find(p => {
+          const pBase = canonName(p);
+          return kwBase.includes(pBase) || pBase.includes(kwBase);
+        });
+        if (provHit) {
+          foundProvince = provHit;
+          break;
+        }
+      }
+
+      if (foundProvince) {
+        // 识别市
+        const ALL_CITIES = Object.keys(PREFIXES[foundProvince] || {});
+        for (const kw of searchKeywords) {
+          const kwBase = canonName(kw);
+          const cityHit = ALL_CITIES.find(c => {
+            const cBase = canonName(c);
+            return kwBase.includes(cBase) || cBase.includes(kwBase);
+          });
+          if (cityHit) {
+            foundCity = cityHit;
+            break;
+          }
+        }
+
+        if (foundCity) {
+          targetPrefixes = PREFIXES[foundProvince][foundCity] || [];
+          console.log(`✅ 识别到城市: ${foundProvince}·${foundCity} → 前缀:`, targetPrefixes);
+        } else {
+          targetPrefixes = Object.values(PREFIXES[foundProvince] || {}).flat();
+          console.log(`✅ 识别到省份: ${foundProvince}（未识别市），聚合前缀数量: ${targetPrefixes.length}`);
+        }
+      }
+    }
+    
+    // 若仍未识别任何前缀，提示用户选择省市以避免超大范围检索
+    if (targetPrefixes.length === 0) {
+      resultContent.innerHTML = '<p style="text-align:center; color:#f39c12;">⚠️ 为了效率，请先选择省份（可选城市更佳），再输入关键词进行查询。</p>';
+      return;
+    }
+    
+    // 生成完整的6位邮编列表：
+    // - 若是4位前缀（精确到城市），只枚举后两位 00-99（每前缀 100 个文件）
+    // - 若是2位前缀（理论上不再使用；若遇到则回退生成 0000-9999）
+    const allPostcodes = [];
+    for (const prefix of targetPrefixes) {
+      if (prefix.length === 4) {
+        for (let e = 0; e <= 9; e++) {
+          for (let f = 0; f <= 9; f++) {
+            allPostcodes.push(`${prefix}${e}${f}`);
+          }
+        }
+      } else { // 2位前缀
+        for (let a = 0; a <= 9; a++) {
+          for (let b = 0; b <= 9; b++) {
+            for (let c = 0; c <= 9; c++) {
+              for (let d = 0; d <= 9; d++) {
+                allPostcodes.push(`${prefix}${a}${b}${c}${d}`);
+              }
+            }
+          }
+        }
+      }
+    }
+    
+    console.log(`📊 搜索范围: ${allPostcodes.length} 个邮编文件`);
+    
+    let checkedCount = 0;
+    const progressSpan = document.getElementById('searchProgress');
+    
+    // 并发请求，每批20个（减小单批时间，进度更快刷新）
+    const batchSize = 20;
+    for (let i = 0; i < allPostcodes.length; i += batchSize) {
+      const batch = allPostcodes.slice(i, i + batchSize);
+      
+      const promises = batch.map(async (code) => {
+        try {
+          const response = await fetch(`code/${code}.json`);
+          if (response.ok) {
+            const data = await response.json();
+            
+            // 搜索匹配的记录 - 按权重累计命中
+            const matched = data.map(item => {
+              const fields = {
+                province: normalizeText(item.province),
+                city: normalizeText(item.city),
+                area: normalizeText(item.area),
+                name: normalizeText(item.name),
+                address: normalizeText(item.address)
+              };
+
+              // 单个关键词的命中向量与权重（提升地址/名称的权重）
+              let fieldScore = 0;
+              let keywordHits = 0;
+              const weights = { address: 220, name: 160, area: 60, city: 45, province: 30 };
+
+              searchKeywords.forEach(keyword => {
+                const kw = normalizeText(keyword);
+                let hitThisKeyword = false;
+
+                // 原词匹配各字段
+                Object.entries(fields).forEach(([field, value]) => {
+                  if (value.includes(kw)) {
+                    fieldScore += weights[field];
+                    hitThisKeyword = true;
+                  }
+                });
+
+                // 扩展关键词匹配（缩写展开）
+                if (!hitThisKeyword && abbreviationMap[keyword]) {
+                  abbreviationMap[keyword].forEach(expanded => {
+                    const exp = normalizeText(expanded);
+                    Object.entries(fields).forEach(([field, value]) => {
+                      if (value.includes(exp)) {
+                        fieldScore += weights[field] * 0.6; // 扩展词权重略低
+                        hitThisKeyword = true;
+                      }
+                    });
+                  });
+                }
+
+                if (hitThisKeyword) {
+                  keywordHits += 1;
+                }
+              });
+
+              // 覆盖率加成：命中越多关键词，加分越多
+              const coverageRatio = searchKeywords.length > 0 ? (keywordHits / searchKeywords.length) : 0;
+              const coverageBonus = coverageRatio * 200;
+              // 全覆盖大额奖励，确保匹配所有关键词的结果排在前面
+              const fullCoverBonus = coverageRatio === 1 ? 800 : 0;
+
+              // 没有任何命中则丢弃
+              if (fieldScore === 0) return null;
+
+              // 计算相关性评分（叠加既有细粒度评分）
+              const relevance = calculateRelevance(item, searchKeywords, expandedKeywords);
+              const score = fieldScore + coverageBonus + fullCoverBonus + relevance;
+
+              return { ...item, _relevance: score, _keywordHits: keywordHits };
+            }).filter(item => item !== null);
+            
+            return matched;
+          }
+        } catch (e) {
+          // 文件不存在或读取失败，返回空数组
+          return [];
+        }
+        return [];
+      }).map(p => p.finally(() => {
+        checkedCount += 1;
+        if (progressSpan) progressSpan.textContent = checkedCount;
+      }));
+      
+      const batchResults = await Promise.all(promises);
+      batchResults.forEach(items => {
+        if (items.length > 0) {
+          results.push(...items);
+        }
+      });
+      
+      // 找到足够结果后可以提前停止
+      if (results.length > 200 && foundProvince) {
+        console.log(`✅ 已找到${results.length}条结果，提前结束搜索`);
+        break;
+      }
+    }
+    
+    console.log(`🎯 搜索完成，共找到 ${results.length} 条结果`);
+    
+    // 显示结果
+    if (results.length === 0) {
+      resultContent.innerHTML = `
+        <p style="text-align:center; color:#f39c12;">
+          ❌ 未找到包含所有关键词的地址信息<br>
+          <span style="font-size:14px; color:#666; margin-top:12px; display:block;">
+            原始输入：<strong>${keywords}</strong><br>
+            分词结果：${searchKeywords.map(k => `<span style="background:#e3f2fd; padding:2px 6px; border-radius:3px; margin:0 3px;">${k}</span>`).join('')}<br>
+            ${foundProvince ? `已搜索 ${foundProvince} 省份的 ${checkedCount} 个邮编` : `已搜索全国 ${checkedCount} 个邮编`}<br>
+            <strong style="color:#e74c3c;">提示：已改为权重匹配，可尝试增加更多关键词提高相关度</strong>
+          </span>
+        </p>
+      `;
+      return;
+    }
+    
+    // 按相关性评分排序（从高到低），并以命中关键词数作为次级排序
+    results.sort((a, b) => {
+      const rel = (b._relevance || 0) - (a._relevance || 0);
+      if (rel !== 0) return rel;
+      return (b._keywordHits || 0) - (a._keywordHits || 0);
+    });
+    
+    // 限制显示前100条最相关结果
+    const displayResults = results.slice(0, 100);
+    
+    // 去重并按邮编分组
+    const grouped = {};
+    displayResults.forEach(item => {
+      if (!grouped[item.code]) {
+        grouped[item.code] = [];
+      }
+      grouped[item.code].push(item);
+    });
+    
+    let html = `<h3 style="color:var(--green); margin-top:0;">找到 ${results.length} 条结果${results.length > 100 ? '（显示最相关的前100条）' : ''}，涉及 ${Object.keys(grouped).length} 个邮编：</h3>`;
+    
+    // 显示分词结果
+    html += `<p style="font-size:13px; color:#666; margin-bottom:8px;">🔍 分词结果：${searchKeywords.map(k => `<span style="background:#e3f2fd; padding:2px 6px; border-radius:3px; margin:0 3px;">${k}</span>`).join('')}</p>`;
+    
+    // 添加搜索关键词提示
+    if (expandedKeywords.length > searchKeywords.length) {
+      const extraKeywords = expandedKeywords.filter(k => !searchKeywords.includes(k));
+      html += `<p style="font-size:13px; color:#666; margin-bottom:12px;">💡 扩展搜索：${extraKeywords.join('、')}</p>`;
+    }
+    
+    html += '<div style="max-height:500px; overflow-y:auto;">';
+    
+    // 按“该邮编下最高相关性”排序，避免被邮编数字顺序打乱
+    const sortedCodes = Object.keys(grouped).sort((codeA, codeB) => {
+      const bestA = Math.max(...grouped[codeA].map(x => x._relevance || 0));
+      const bestB = Math.max(...grouped[codeB].map(x => x._relevance || 0));
+      return bestB - bestA;
+    });
+    
+    sortedCodes.forEach(code => {
+      // 对同一邮编内的结果也按相关性排序
+      grouped[code].sort((a, b) => (b._relevance || 0) - (a._relevance || 0));
+      
+      html += `<div style="background:#e8f5e9; border-radius:8px; padding:12px; margin-bottom:16px; border-left:4px solid var(--light-green);">`;
+      html += `<div style="font-size:20px; font-weight:bold; color:var(--light-green); margin-bottom:12px;">邮编：${code}</div>`;
+      
+      grouped[code].forEach((item, idx) => {
+        // 高亮匹配的关键词
+        let highlightedAddress = item.address;
+        let highlightedName = item.name;
+        
+        const escapeRegExp = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const highlightKeywords = [...new Set([...searchKeywords, ...expandedKeywords].map(k => normalizeText(k)).filter(Boolean))];
+
+        highlightKeywords.forEach(keyword => {
+          const regex = new RegExp(`(${escapeRegExp(keyword)})`, 'gi');
+          highlightedAddress = highlightedAddress.replace(regex, '<mark style="background:#fff59d; padding:0 2px;">$1</mark>');
+          highlightedName = highlightedName.replace(regex, '<mark style="background:#fff59d; padding:0 2px;">$1</mark>');
+        });
+        
+        html += `
+          <div style="background:#fff; border-radius:6px; padding:12px; margin-bottom:8px; position:relative;">
+            ${item._relevance > 80 ? '<span style="position:absolute; top:8px; right:8px; background:#4caf50; color:white; padding:2px 6px; border-radius:3px; font-size:11px;">高度相关</span>' : ''}
+            <div style="font-size:16px; font-weight:bold; color:var(--green); margin-bottom:6px;">
+              ${highlightedName}
+            </div>
+            <div style="font-size:14px; margin-bottom:3px;">
+              <strong>地区：</strong>${item.province} ${item.city} ${item.area}
+            </div>
+            <div style="font-size:14px; margin-bottom:3px;">
+              <strong>地址：</strong>${highlightedAddress}
+            </div>
+            <div style="font-size:14px;">
+              <strong>电话：</strong>${item.phone}
+            </div>
+          </div>
+        `;
+      });
+      
+      html += '</div>';
+    });
+    
+    html += '</div>';
+    resultContent.innerHTML = html;
+    
+  } catch (error) {
+    console.error('查询出错:', error);
+    resultContent.innerHTML = `<p style="text-align:center; color:#e74c3c;">❌ 查询出错，请稍后重试</p>`;
+  }
+}
+
+// ====== 事件绑定 ======
+document.addEventListener('DOMContentLoaded', function() {
+  // 邮编查询按钮
+  document.getElementById('queryCodeBtn').addEventListener('click', queryByPostcode);
+  document.getElementById('postcodeInput').addEventListener('keypress', function(event) {
+    if (event.key === 'Enter') {
+      queryByPostcode();
+    }
+  });
+  
+  // 地址查询按钮
+  document.getElementById('queryAddressBtn').addEventListener('click', queryByAddress);
+  document.getElementById('addressInput').addEventListener('keypress', function(event) {
+    if (event.key === 'Enter') {
+      queryByAddress();
+    }
+  });
+
+  // 初始化省市下拉
+  try { initProvinceCityDropdowns(); } catch (e) { console.warn('省市下拉初始化失败', e); }
+});
+</script>
+
+<style>
+.query-result {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  margin-top: 24px;
+  box-shadow: 0 2px 12px #e0e0e0;
+  animation: fadeIn 0.5s ease;
+}
+
+#resultContent {
+  font-size: 14px;
+  line-height: 1.6;
+}
+</style>
+
+</body>
+</html>

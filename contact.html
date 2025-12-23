@@ -4,13 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>联系我们 - Daniel_清寒的邮政小站</title>
+    <link rel="icon" type="image/svg+xml" href="mail.svg">
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
     
+    <!-- Leaflet Map -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    
     <!-- 评论区分类标签 -->
-    <meta property="og:title" content="post.wuhanqing.cn" />
+    <meta property="og:title" content="post.wuhanqing.cn"/>
 </head>
 <body>
     <header>
@@ -18,9 +23,10 @@
         <div style="font-size:22px;letter-spacing:1px;margin-top:8px;">中国邮政爱好者的家园</div>
     </header>
     <nav>
-        <a class="tab" href="index.html">主页</a>
+        <a class="tab" href="index.html">小站主页</a>
         <a class="tab" href="calculator.html">邮资计算</a>
-        <a class="tab" href="about.html">关于邮政</a>
+        <a class="tab" href="makecode.html">打印条码</a>
+        <a class="tab" href="postcode.html">邮编查询</a>
         <a class="tab" href="download.html">资料下载</a>
         <a class="tab active" href="contact.html">联系我们</a>
     </nav>
@@ -33,11 +39,44 @@
                     <div class="card-desc">
                         <ul>
                             <li>邮箱：<a href="mailto:wuhanqing2005@gmail.com">wuhanqing2005@gmail.com</a></li>
-                            <li>微信：Daniel_Qinghan</li>
+                            <li>微信：<a href="javascript:void(0);" onclick="navigator.clipboard.writeText('Daniel_Qinghan').then(() => alert('微信号已复制: Daniel_Qinghan'));" style="color:#006633; text-decoration: underline;">Daniel_Qinghan</a></li>
                             <li>地址：韩国庆熙大学国际校区</li>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">欢迎访问我的网站</div>
+                    <div class="card-desc">
+                        <ul>
+                            <li>个人网站(海外版): <a href="https://wuhanqing2005.github.io" target="_blank" rel="noopener">https://wuhanqing2005.github.io</a></li>
+                            <li>个人网站(国内版): <a href="https://wuhanqing.cn" target="_blank" rel="noopener">https://wuhanqing.cn</a></li>
+                            <li>航图查询: <a href="https://chart.wuhanqing.cn/" target="_blank" rel="noopener">https://chart.wuhanqing.cn/</a></li>
                         </ul>
                     </div>
                 </div>
+
+                <div class="card">
+                    <div class="card-title">查看地图</div>
+                    <div class="card-desc">
+                        <div id="map" style="width:100%;height:260px;border-radius:12px;"></div>
+                        <script>
+                            // 初始化地图 (庆熙大学国际校区坐标)
+                            var map = L.map('map').setView([37.246368, 127.079483], 10);
+                            
+                            // 添加OpenStreetMap瓷砖层
+                            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                                attribution: '© OpenStreetMap contributors',
+                                maxZoom: 19
+                            }).addTo(map);
+                            
+                            // 添加标记
+                            L.marker([37.246368, 127.079483]).addTo(map)
+                                .bindPopup('<b>Kyung Hee University Global Campus</b><br>庆熙大学国际校区')
+                                .openPopup();
+                        </script>
+                    </div>
+                </div>
+
 
                 <!--
                 <div class="card">
@@ -54,7 +93,7 @@
                 </div>
                 -->
             </div>
-
+            
             <!-- Giscus 评论区 -->
             <script src="https://giscus.app/client.js"
                 data-repo="WuHanqing2005/my-website-discussions"

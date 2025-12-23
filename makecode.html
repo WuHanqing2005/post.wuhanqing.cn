@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>打印条码 - Daniel_清寒的邮政小站</title>
+    <link rel="icon" type="image/svg+xml" href="mail.svg">
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+    
+    <!-- JsBarcode库 用于生成条形码 -->
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+</head>
+<body>
+    <header>
+        <h1 style="font-size:2.6em;letter-spacing:3px;">Daniel_清寒的邮政小站</h1>
+        <div style="font-size:22px;letter-spacing:1px;margin-top:8px;">中国邮政爱好者的家园</div>
+    </header>
+    <nav>
+        <a class="tab" href="index.html">小站主页</a>
+        <a class="tab" href="calculator.html">邮资计算</a>
+        <a class="tab active" href="makecode.html">打印条码</a>
+        <a class="tab" href="postcode.html">邮编查询</a>
+        <a class="tab" href="download.html">资料下载</a>
+        <a class="tab" href="contact.html">联系我们</a>
+    </nav>
+    <main>
+        <section id="barcode" class="active">
+            <h2>邮政条码打印</h2>
+            
+            <!-- 模式切换选项卡 -->
+            <div class="mode-tabs">
+                <button id="validateModeBtn" class="mode-tab active" onclick="switchMode('validate')">验证条码</button>
+                <button id="generateModeBtn" class="mode-tab" onclick="switchMode('generate')">生成条码</button>
+            </div>
+
+            <!-- 模式1：验证条码 -->
+            <div id="validateMode" class="mode-container">
+                <div class="barcode-form">
+                    <label for="barcodeInput">输入邮政条码：</label>
+                    <input type="text" id="barcodeInput" placeholder="例如: 1021850131 或 XA10001001421 或 70123456001531" maxlength="20">
+                    <div style="font-size:12px; color:#666; margin-top:8px; text-align:left;">
+                        <strong>条码格式说明：</strong><br>
+                        • 第1-3位：业务种类代码（如1、7、89、XA、SA等）<br>
+                        • 第4-11位：邮件序列号（8位数字）<br>
+                        • 第12位：校验码（1位数字）<br>
+                        • 第13-14位：省别代码（2位数字）<br>
+                        <br>
+                        <strong>常见业务代码：</strong> 1(特快) 7(平邮) 89(标快) 9(包裹) X(给据) S(印刷品) P(普通包) N(约投) 90(报刊)
+                    </div>
+                    <button id="confirmBtn" class="confirm-btn">确认</button>
+                </div>
+            </div>
+
+            <!-- 模式2：生成条码 -->
+            <div id="generateMode" class="mode-container" style="display: none;">
+                <div class="barcode-form">
+                    <label for="businessType">业务种类代码：</label>
+                    <select id="businessType">
+                        <option value="">-- 选择业务类型 --</option>
+                        <optgroup label="━━ 特快/快递 ━━">
+                        <option value="1">1 - 特快专递</option>
+                        <option value="89">89 - 标准快递</option>
+                        <option value="E">E - 特快专递(重要件)</option>
+                        </optgroup>
+                        <optgroup label="━━ 快递包裹 ━━">
+                        <option value="92">92 - 快递包裹</option>
+                        <option value="93">93 - 快递包裹</option>
+                        <option value="94">94 - 寄递快包</option>
+                        <option value="95">95 - 快递包裹</option>
+                        <option value="96">96 - 快递包裹</option>
+                        <option value="97">97 - 寄递快包</option>
+                        <option value="98">98 - 寄递快包</option>
+                        <option value="99">99 - 寄递快包</option>
+                        </optgroup>
+                        <optgroup label="━━ 平常邮件 ━━">
+                        <option value="70">70 - 条码平信/平刷</option>
+                        <option value="71">71 - 条码平信/平刷</option>
+                        <option value="72">72 - 条码平刷</option>
+                        <option value="7">7 - 平常邮件</option>
+                        </optgroup>
+                        <optgroup label="━━ 预约投递 ━━">
+                        <option value="8">8 - 预约投递邮件</option>
+                        <option value="88">88 - 个人约投详情单</option>
+                        <option value="N">N - 约投挂号信函</option>
+                        </optgroup>
+                        <optgroup label="━━ 给据信函 ━━">
+                        <option value="X">X - 给据信函</option>
+                        <option value="XA">XA - 个人给据信函</option>
+                        <option value="XB">XB - 大宗给据信函</option>
+                        <option value="H">H - 挂号信函(商函)</option>
+                        </optgroup>
+                        <optgroup label="━━ 给据印刷品 ━━">
+                        <option value="S">S - 给据印刷品</option>
+                        <option value="SA">SA - 个人挂刷</option>
+                        <option value="SB">SB - 大宗挂刷</option>
+                        </optgroup>
+                        <optgroup label="━━ 普通包裹 ━━">
+                        <option value="P">P - 普通包裹</option>
+                        <option value="PA">PA - 老四联预制单</option>
+                        <option value="PE">PE - 新四联预制单</option>
+                        <option value="PH">PH - 机打预制单</option>
+                        <option value="9">9 - 包裹/邮务</option>
+                        </optgroup>
+                        <optgroup label="━━ 特殊业务 ━━">
+                        <option value="90">90 - 报刊</option>
+                        <option value="BK">BK - 报刊专递</option>
+                        <option value="NA">NA - 贺礼卡</option>
+                        <option value="Q">Q - 热敏预制单</option>
+                        <option value="LY">LY - 礼仪专递</option>
+                        </optgroup>
+                        <optgroup label="━━ 国际业务 ━━">
+                        <option value="PN">PN - 国内给据邮件</option>
+                        </optgroup>
+                    </select>
+                    <input type="text" id="businessTypeCustom" placeholder="或输入自定义代码（1-3位，如1、7、89、PA等）" maxlength="3" style="margin-top:6px;">
+
+                    <label for="sequenceNum" style="margin-top:12px;">邮件序列号：</label>
+                    <input type="text" id="sequenceNum" placeholder="8位数字，如02185001" maxlength="8">
+                    <div style="font-size:12px; color:#666; margin-top:4px;">
+                        邮件序列号是8位数字的唯一编码
+                    </div>
+
+                    <label for="provinceCode" style="margin-top:12px;">省别代码：</label>
+                    <select id="provinceCode">
+                        <option value="">-- 选择省份 --</option>
+                        <option value="11">11 - 北京</option>
+                        <option value="12">12 - 天津</option>
+                        <option value="13">13 - 河北</option>
+                        <option value="14">14 - 山西</option>
+                        <option value="15">15 - 内蒙古</option>
+                        <option value="21">21 - 辽宁</option>
+                        <option value="22">22 - 吉林</option>
+                        <option value="23">23 - 黑龙江</option>
+                        <option value="31">31 - 上海</option>
+                        <option value="32">32 - 江苏</option>
+                        <option value="33">33 - 浙江</option>
+                        <option value="34">34 - 安徽</option>
+                        <option value="35">35 - 福建</option>
+                        <option value="36">36 - 江西</option>
+                        <option value="37">37 - 山东</option>
+                        <option value="41">41 - 河南</option>
+                        <option value="42">42 - 湖北</option>
+                        <option value="43">43 - 湖南</option>
+                        <option value="44">44 - 广东</option>
+                        <option value="45">45 - 广西</option>
+                        <option value="46">46 - 海南</option>
+                        <option value="50">50 - 重庆</option>
+                        <option value="51">51 - 四川</option>
+                        <option value="52">52 - 贵州</option>
+                        <option value="53">53 - 云南</option>
+                        <option value="54">54 - 西藏</option>
+                        <option value="61">61 - 陕西</option>
+                        <option value="62">62 - 甘肃</option>
+                        <option value="63">63 - 青海</option>
+                        <option value="64">64 - 宁夏</option>
+                        <option value="65">65 - 新疆</option>
+                    </select>
+                    <input type="text" id="provinceCodeCustom" placeholder="或输入自定义代码（2数字）" maxlength="2" style="margin-top:6px;">
+
+                    <button id="generateConfirmBtn" class="confirm-btn" style="margin-top:18px;">生成条码</button>
+                </div>
+            </div>
+
+            <!-- 校验结果显示区 -->
+            <div id="resultArea" class="result-area" style="display: none;">
+                <div class="status-item">
+                    <span id="validateStatus" class="status-text">单号校验中...</span>
+                </div>
+                <div class="status-item" id="conflictCheckItem" style="display: none;">
+                    <span id="conflictStatus" class="status-text">单号冲突查询中...</span>
+                </div>
+                <div class="status-item" id="apiSourceItem" style="display: none; margin-top: 12px; padding: 8px; background: #f0f8ff; border-radius: 4px; font-size: 12px;">
+                    <strong>物流查询源：</strong> <span id="apiSourceDisplay" style="color: #0066cc;"></span>
+                </div>
+              <!-- Kuaidi100 H5查询容器 -->
+              <div id="kuaidi100-container" style="display:none; margin-top:15px; border:1px solid #eee; border-radius:6px; overflow:hidden;">
+                <iframe id="kuaidi-frame" src="" width="100%" height="500" frameborder="0" style="background:#fff;"></iframe>
+              </div>
+            </div>
+
+            <!-- 条码显示区 -->
+            <div id="barcodeDisplay" class="barcode-display" style="display: none;">
+                <div class="barcode-info">
+                    <p>邮政条码号: <strong id="barcodeNumber"></strong></p>
+                </div>
+                <div class="barcode-container">
+                    <svg id="barcodeSvg"></svg>
+                    <div id="barcodeText" class="barcode-text"></div>
+                </div>
+                <div class="print-button-area">
+                    <button onclick="window.print()" class="print-btn">打印</button>
+                    <button onclick="downloadBarcode()" class="download-btn">下载条码</button>
+                </div>
+            </div>
+        </section>
+    </main>
+    <footer>
+        <p>
+            本站访客数 <span id="busuanzi_value_site_uv"></span> 人次
+            <span style="margin: 0 10px;">|</span>
+
+            本站总访问量 <span id="busuanzi_value_site_pv"></span> 次
+        </p>
+
+        &copy; 2025 Daniel_清寒的邮政小站 | 本站非中国邮政官方网站，仅供邮政爱好者学习与交流
+    </footer>
+
+<!-- 不蒜子网站访问量统计脚本 -->
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+<script>
+// ====== 识别邮政单号类型 ======
+function identifyMailType(code) {
+  const firstChar = code.charAt(0).toUpperCase();
+  const firstTwo = code.substring(0, 2).toUpperCase();
+  const firstThree = code.substring(0, 3).toUpperCase();
+  
+  // 检查三位开头
+  if (firstThree === 'BK') return '报刊专递';
+  if (firstThree === 'LY') return '礼仪专递(已基本取消)';
+  if (firstThree === 'EC') return '代收货款预制单(基本取消)';
+  
+  // 检查两位开头
+  if (firstTwo === 'PA') return '老四联预制单';
+  if (firstTwo === 'PE') return '新四联预制单';
+  if (firstTwo === 'PH') return '机打预制单';
+  if (firstTwo === 'XA') return '个人给据信函';
+  if (firstTwo === 'XB' || (firstChar === 'X' && firstTwo > 'XB')) return '大宗给据信函及自制号';
+  if (firstTwo === 'SA') return '个人挂刷';
+  if (firstTwo === 'SB' || (firstChar === 'S' && firstTwo > 'SB')) return '大宗挂刷及自制号';
+  if (firstTwo === 'NA' || firstTwo === 'NB' || firstTwo === 'NC' || firstTwo === 'ND') return '贺礼卡';
+  if (firstTwo === 'NE') return '自制段约投挂号信函';
+  if (firstTwo === 'NA' || firstTwo === 'NB' || firstTwo === 'NC' || firstTwo === 'ND') return '约投挂号信函';
+  if (firstTwo === '70' || firstTwo === '71') return '条码平信或条码平刷';
+  if (firstTwo === '72') return '条码平刷';
+  if (firstTwo === '88') return '个人约投详情单';
+  if (firstTwo === '89') return '标准快递';
+  if (firstTwo === '90') return '报刊';
+  if (firstTwo === '92' || firstTwo === '93' || firstTwo === '95' || firstTwo === '96') return '快递包裹';
+  if (firstTwo === '94' || firstTwo === '97' || firstTwo === '98' || firstTwo === '99') return '寄递快包';
+  
+  // 检查单个字符开头
+  if (firstChar === '1') return '特快专递';
+  if (firstChar === '5') return '经济快递(已取消)';
+  if (firstChar === '7') return '平常邮件';
+  if (firstChar === '8') return '预约投递邮件';
+  if (firstChar === '9') return '包裹/邮务';
+  if (firstChar === 'X') return '给据信函';
+  if (firstChar === 'S') return '给据印刷品';
+  if (firstChar === 'P') return '普通包裹';
+  if (firstChar === 'N') return '约投挂号信函(大宗及少部分个人)';
+  if (firstChar === 'K') return '快递包裹(已基本取消)';
+  if (firstChar === 'E') return '特快专递(苹果件，重要件)';
+  if (firstChar === 'H') return '挂号信函(商函)';
+  if (firstChar === 'Q') return '热敏预制单';
+  
+  return '其他为电商标快或自制号';
+}
+
+// ====== 下载条码图片 ======
+function downloadBarcode() {
+  const barcodeNumber = document.getElementById('barcodeNumber').textContent;
+  if (!barcodeNumber) {
+    alert('请先生成或验证条码');
+    return;
+  }
+
+  // 获取SVG元素
+  const svgElement = document.getElementById('barcodeSvg');
+  if (!svgElement) {
+    alert('条码不存在');
+    return;
+  }
+
+  // 创建canvas元素
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d');
+  
+  // 设置canvas大小（SVG加上边距）
+  const svgRect = svgElement.getBoundingClientRect();
+  canvas.width = svgRect.width + 20;
+  canvas.height = svgRect.height + 40;
+  
+  // 填充白色背景
+  ctx.fillStyle = '#FFFFFF';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // 将SVG转换为图像
+  const svgString = new XMLSerializer().serializeToString(svgElement);
+  const img = new Image();
+  const blob = new Blob([svgString], { type: 'image/svg+xml' });
+  const url = URL.createObjectURL(blob);
+  
+  img.onload = function() {
+    ctx.drawImage(img, 10, 10, svgRect.width, svgRect.height);
+    
+    // 绘制条码号文字
+    ctx.fillStyle = '#000000';
+    ctx.font = 'bold 14px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(barcodeNumber, canvas.width / 2, canvas.height - 10);
+    
+    // 转换为PNG并下载
+    canvas.toBlob(function(blob) {
+      const downloadUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = `barcode_${barcodeNumber}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(downloadUrl);
+    });
+    
+    URL.revokeObjectURL(url);
+  };
+  
+  img.onerror = function() {
+    // 如果SVG转换失败，直接使用canvas下载
+    canvas.toBlob(function(blob) {
+      const downloadUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = `barcode_${barcodeNumber}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(downloadUrl);
+    });
+  };
+  
+  img.src = url;
+}
+
+// ====== 模式切换函数 ======
+function switchMode(mode) {
+  const validateMode = document.getElementById('validateMode');
+  const generateMode = document.getElementById('generateMode');
+  const validateModeBtn = document.getElementById('validateModeBtn');
+  const generateModeBtn = document.getElementById('generateModeBtn');
+  
+  if (mode === 'validate') {
+    validateMode.style.display = 'block';
+    generateMode.style.display = 'none';
+    validateModeBtn.classList.add('active');
+    generateModeBtn.classList.remove('active');
+  } else {
+    validateMode.style.display = 'none';
+    generateMode.style.display = 'block';
+    validateModeBtn.classList.remove('active');
+    generateModeBtn.classList.add('active');
+  }
+  
+  // 隐藏结果区域
+  document.getElementById('resultArea').style.display = 'none';
+  document.getElementById('barcodeDisplay').style.display = 'none';
+}
+
+// ====== S10校验码核心函数 ======
+// 对8位邮件序列号计算校验码
+function computeS10CheckDigit(eightDigits) {
+  if (!/^\d{8}$/.test(eightDigits)) {
+    throw new Error("参数必须是8位数字字符串");
+  }
+  const weights = [8, 6, 4, 2, 3, 5, 9, 7];
+  let sum = 0;
+  for (let i = 0; i < 8; i++) {
+    sum += Number(eightDigits[i]) * weights[i];
+  }
+  const r = sum % 11;
+  let cd = 11 - r;
+  if (cd === 10) cd = 0;
+  else if (cd === 11) cd = 5;
+  return cd;
+}
+
+// ====== 平信(70/71/72) 加权模11：前10位参与权重 [6,0,8,6,4,2,3,5,9,7] ======
+function computeFlatMailCheckDigit(firstTenDigits) {
+  if (!/^\d{10}$/.test(firstTenDigits)) {
+    throw new Error('平信校验需要前10位纯数字');
+  }
+  const weights = [6, 0, 8, 6, 4, 2, 3, 5, 9, 7];
+  let sum = 0;
+  for (let i = 0; i < 10; i++) {
+    sum += Number(firstTenDigits[i]) * weights[i];
+  }
+  const r = sum % 11;
+  let cd = 11 - r;
+  if (cd === 10) cd = 0;
+  else if (cd === 11) cd = 5;
+  return cd;
+}
+
+// 统一选择正确算法计算校验位
+function computeChinaPostCheckDigit(businessType, sequenceNum) {
+  const bt = (businessType || '').toString();
+  if (bt === '70' || bt === '71' || bt === '72') {
+    const firstTen = bt + sequenceNum;
+    return computeFlatMailCheckDigit(firstTen);
+  }
+  return computeS10CheckDigit(sequenceNum);
+}
+
+// ====== 验证中国邮政条码 ======
+// 中国邮政条码格式：[1-3位业务种类代码][8位邮件序列号][1位校验码][2位省别代码] = 12-14位
+// 例如：1021850001331 或 XA10001001421 或 7012345600131
+function validateChinaPostBarcode(code) {
+  if (typeof code !== 'string') {
+    return { ok: false, reason: 'format', message: '输入必须是字符串' };
+  }
+  
+  const s = code.trim().toUpperCase();
+  
+  // 检查格式：1-3位字母或数字 + 8位数字 + 1位数字 + 2位数字 = 12-14位
+  if (!/^[A-Z0-9]{1,3}\d{11}$/.test(s)) {
+    return { 
+      ok: false, 
+      reason: 'format', 
+      message: '格式错误！中国邮政条码标准格式为：1-3位业务代码+8位序列号+1位校验码+2位省别\n例如：1021850001331(特快) 或 XA10001001421(给据信函) 或 7012345600131(平信)\n其中：第1-3位=业务种类代码，第4-11位=邮件序列号，第12位=校验码，第13-14位=省别代码' 
+    };
+  }
+  
+  // 动态解析条码长度
+  let businessType, sequenceNum, checkDigitInCode, provinceCode;
+  
+  // 尝试不同的长度组合
+  for (let typeLen = 1; typeLen <= 3; typeLen++) {
+    if (s.length === typeLen + 11) {
+      businessType = s.slice(0, typeLen);
+      sequenceNum = s.slice(typeLen, typeLen + 8);
+      checkDigitInCode = Number(s[typeLen + 8]);
+      provinceCode = s.slice(typeLen + 9, typeLen + 11);
+      break;
+    }
+  }
+  
+  if (!businessType) {
+    return { 
+      ok: false, 
+      reason: 'format', 
+      message: '条码长度不符合标准（应为12-14位）' 
+    };
+  }
+
+  // 特例：13位纯数字条码不进行校验（按用户需求）
+  if (/^\d{13}$/.test(s)) {
+    const mailType = identifyMailType(businessType);
+    return {
+      ok: true,
+      businessType,
+      mailType,
+      sequenceNum,
+      given: checkDigitInCode,
+      computed: null,
+      provinceCode,
+      fullCode: s,
+      details: {
+        '业务代码': businessType,
+        '邮件类型': mailType,
+        '邮件序列号': sequenceNum,
+        '校验算法': '跳过校验（13位纯数字）',
+        '校验码': `${checkDigitInCode}✓(跳过)`,
+        '省别代码': provinceCode
+      }
+    };
+  }
+  
+  try {
+    // 根据业务类型选择正确算法计算校验码
+    const computed = computeChinaPostCheckDigit(businessType, sequenceNum);
+    const isValid = computed === checkDigitInCode;
+    const algoName = (businessType === '70' || businessType === '71' || businessType === '72')
+      ? '平信(70/71/72) 加权模11'
+      : 'UPU S10';
+
+    // 识别邮件类型
+    const mailType = identifyMailType(businessType);
+
+    const result = {
+      ok: isValid,
+      businessType: businessType,      // 业务种类代码
+      mailType: mailType,              // 邮件类型
+      sequenceNum: sequenceNum,        // 邮件序列号
+      given: checkDigitInCode,         // 条码中给出的校验码
+      computed: computed,              // 计算出的校验码
+      provinceCode: provinceCode,      // 省别代码
+      fullCode: s,                     // 完整条码
+      details: {
+        '业务代码': businessType,
+        '邮件类型': mailType,
+        '邮件序列号': sequenceNum,
+        '校验算法': algoName,
+        '校验码': `${checkDigitInCode}${isValid ? '✓' : '✗(' + computed + ')'}`,
+        '省别代码': provinceCode
+      }
+    };
+
+    if (!isValid) {
+      result.message = `校验失败：应为 ${computed}（${algoName}）`;
+      result.suggestedFullCode = `${businessType}${sequenceNum}${computed}${provinceCode}`;
+    }
+
+    return result;
+  } catch (e) {
+    return { ok: false, reason: '计算错误', message: e.message };
+  }
+}
+
+// ====== 生成条码 ======
+// 用户输入业务种类、序列号、省别代码，系统计算校验码后生成完整条码
+function generateBarcodeFromInput() {
+  let businessType = document.getElementById('businessType').value || document.getElementById('businessTypeCustom').value;
+  const sequenceNum = document.getElementById('sequenceNum').value;
+  let provinceCode = document.getElementById('provinceCode').value || document.getElementById('provinceCodeCustom').value;
+  
+  // 验证输入
+  if (!businessType || businessType === '') {
+    return { 
+      ok: false, 
+      message: '请选择或输入业务种类代码（如1、7、89、XA、SA等）' 
+    };
+  }
+  
+  // 业务代码可以是1-3位（数字或字母组合）
+  if (!/^[A-Z0-9]{1,3}$/i.test(businessType)) {
+    return { 
+      ok: false, 
+      message: '业务种类代码格式不正确（1-3位字母或数字）' 
+    };
+  }
+  businessType = businessType.toUpperCase();
+  
+  if (!sequenceNum || !/^\d{8}$/.test(sequenceNum)) {
+    return { 
+      ok: false, 
+      message: '邮件序列号必须是8位数字' 
+    };
+  }
+  
+  if (!provinceCode || !/^\d{2}$/.test(provinceCode)) {
+    return { 
+      ok: false, 
+      message: '省别代码必须是2位数字' 
+    };
+  }
+  
+  try {
+    // 计算校验码（根据业务类型自动选择算法）
+    const checkDigit = computeChinaPostCheckDigit(businessType, sequenceNum);
+    
+    // 生成完整条码
+    const fullCode = businessType + sequenceNum + checkDigit + provinceCode;
+    
+    // 识别邮件类型
+    const mailType = identifyMailType(businessType);
+    
+    return {
+      ok: true,
+      businessType: businessType,
+      mailType: mailType,
+      sequenceNum: sequenceNum,
+      checkDigit: checkDigit,
+      provinceCode: provinceCode,
+      fullCode: fullCode,
+      details: {
+        '业务代码': businessType,
+        '邮件类型': mailType,
+        '邮件序列号': sequenceNum,
+        '计算校验码': `${checkDigit}`,
+        '省别代码': provinceCode
+      }
+    };
+  } catch (e) {
+    return { ok: false, message: '生成条码时出错: ' + e.message };
+  }
+}
+
+// ====== 多源物流查询API（带详细诊断信息） ======
+async function queryTrackingInfo(barcode) {
+  const apiLog = [];
+  
+  // 方案1：快递100免费查询（新接口，支持JSONP）
+  async function queryWithKuaidi100Free() {
+    const apiName = '快递100免费版';
+    // 注意：这个接口可能需要在实际部署时替换为您自己申请的Key
+    const url = `https://www.kuaidi100.com/query?type=yuantong&postid=${barcode}`;
+    try {
+      console.log(`[${apiName}] 请求: ${url}`);
+      const response = await fetch(url, {
+        method: 'GET',
+        mode: 'cors'
+      });
+      console.log(`[${apiName}] 响应状态: ${response.status} ${response.statusText}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`[${apiName}] 数据: `, data);
+        apiLog.push(`✅ ${apiName} 成功 (HTTP ${response.status})`);
+        return { ...data, _apiSource: apiName, _apiUrl: url };
+      } else {
+        apiLog.push(`❌ ${apiName} 失败 (HTTP ${response.status}: ${response.statusText})`);
+        return null;
+      }
+    } catch (e) {
+      console.log(`[${apiName}] 错误:`, e);
+      apiLog.push(`❌ ${apiName} CORS限制: ${e.message}`);
+      return null;
+    }
+  }
+  
+  // 方案2：使用中国邮政官方EMS查询（可能需要代理）
+  async function queryWithEMSOfficial() {
+    const apiName = 'EMS官方查询';
+    const url = `https://www.ems.com.cn/queryList`;
+    try {
+      console.log(`[${apiName}] 请求: ${url}`);
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `mailNum=${barcode}`
+      });
+      console.log(`[${apiName}] 响应状态: ${response.status} ${response.statusText}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`[${apiName}] 数据:`, data);
+        apiLog.push(`✅ ${apiName} 成功 (HTTP ${response.status})`);
+        return { ...data, _apiSource: apiName, _apiUrl: url };
+      } else {
+        apiLog.push(`❌ ${apiName} 失败 (HTTP ${response.status}: ${response.statusText})`);
+        return null;
+      }
+    } catch (e) {
+      console.log(`[${apiName}] 错误:`, e);
+      apiLog.push(`❌ ${apiName} CORS限制: ${e.message}`);
+      return null;
+    }
+  }
+
+  // 方案3：使用KuaiDi API（备用）
+  async function queryWithKuaidiAPI() {
+    const apiName = 'KuaiDi API';
+    const url = `https://api.kuaidiapi.cn/api?id=${barcode}&type=ems`;
+    try {
+      console.log(`[${apiName}] 请求: ${url}`);
+      const response = await fetch(url, {
+        headers: { 'User-Agent': 'Mozilla/5.0' }
+      });
+      console.log(`[${apiName}] 响应状态: ${response.status} ${response.statusText}`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`[${apiName}] 数据: `, data);
+        apiLog.push(`✅ ${apiName} 成功 (HTTP ${response.status})`);
+        return { ...data, _apiSource: apiName, _apiUrl: url };
+      } else {
+        apiLog.push(`❌ ${apiName} 失败 (HTTP ${response.status}: ${response.statusText})`);
+        return null;
+      }
+    } catch (e) {
+      console.log(`[${apiName}] 错误:`, e);
+      apiLog.push(`❌ ${apiName} CORS限制: ${e.message}`);
+      return null;
+    }
+  }
+  
+  // 依次尝试各个API
+  console.log(`\n[物流查询] ========== 开始查询条码 ${barcode} ==========`);
+  
+  // 优先尝试快递100免费版
+  let result = await queryWithKuaidi100Free();
+  if (result && !result._diagnosisMessage) {
+    console.log('[物流查询] ✅ 快递100免费版成功返回数据');
+    console.log('[物流查询]', apiLog.join('\n'));
+    return result;
+  }
+  
+  // 尝试EMS官方
+  result = await queryWithEMSOfficial();
+  if (result && !result._diagnosisMessage) {
+    console.log('[物流查询] ✅ EMS官方成功返回数据');
+    console.log('[物流查询]', apiLog.join('\n'));
+    return result;
+  }
+  
+  // 尝试KuaiDi API
+  result = await queryWithKuaidiAPI();
+  if (result && !result._diagnosisMessage) {
+    console.log('[物流查询] ✅ KuaiDi API成功返回数据');
+    console.log('[物流查询]', apiLog.join('\n'));
+    return result;
+  }
+  
+  console.log('[物流查询] ❌ 所有API都无法连接!');
+  console.log('[物流查询] 诊断日志:');
+  console.log(apiLog.join('\n'));
+  console.log('[物流查询] ==========================================\n');
+  
+  // 返回CORS问题说明和解决方案
+  return {
+    _apiSource: '所有API受CORS限制',
+    _apiLog: apiLog,
+    _diagnosisMessage: '⚠️ 浏览器CORS跨域限制\n\n所有物流查询API都被浏览器安全策略阻止。\n\n✅ 推荐解决方案：\n1. 【最简单】手动验证：点击下方按钮跳转到快递100查询\n2. 【部署后】使用后端代理服务器转发API请求\n3. 【开发环境】安装浏览器CORS插件（仅测试用）\n\n💡 当前条码格式已验证通过，您可以选择：\n• 跳过冲突检查，直接生成条码\n• 手动在快递100网站查询后再确认'
+  };
+}
+
+// ====== 检查条码冲突（返回API来源和诊断信息） ======
+async function checkBarcodeConflict(barcode) {
+  try {
+    console.log(`[冲突检查] 开始检查条码: ${barcode}`);
+    
+    // 显示查询中的信息
+    const conflictStatus = document.getElementById('conflictStatus');
+    if (conflictStatus) {
+      conflictStatus.textContent = '正在查询物流数据库...（最多5秒）';
+    }
+    
+    // 使用快递100 H5嵌入方式，不再直接调用API
+    // 加载iframe到页面，要求用户人工确认无在途物流后再继续
+    const container = document.getElementById('kuaidi100-container');
+    const iframe = document.getElementById('kuaidi-frame');
+    const queryUrl = `https://m.kuaidi100.com/result.jsp?nu=${barcode}`;
+    if (iframe && container) {
+      iframe.src = queryUrl;
+      container.style.display = 'block';
+    }
+    
+    return {
+      ok: true,
+      conflicted: false,
+      message: '✅ 已载入实时物流数据，请在下方窗口确认“无物流信息”后再继续',
+      statusText: '嵌入查询',
+      apiSource: '快递100(H5)',
+      embedded: true,
+      requireManualConfirm: true
+    };
+    
+  } catch (error) {
+    console.error('[冲突检查] 查询出错:', error);
+    return {
+      ok: true,
+      conflicted: false,
+      message: '⚠ 物流查询失败，但条码格式有效。建议稍后再次确认',
+      statusText: '查询失败',
+      apiSource: '查询异常'
+    };
+  }
+}
+
+// ====== 生成条码图片 ======
+function generateBarcode(barcodeNumber) {
+  try {
+    JsBarcode("#barcodeSvg", barcodeNumber, {
+      format: "CODE128",
+      width: 2,
+      height: 100,
+      displayValue: false,
+      margin: 0
+    });
+    document.getElementById('barcodeText').textContent = barcodeNumber;
+  } catch (e) {
+    console.error('条码生成失败:', e);
+  }
+}
+
+// ====== 手动确认后继续显示条码 ======
+function proceedAfterManualConfirm(fullCode) {
+  const resultArea = document.getElementById('resultArea');
+  const barcodeDisplay = document.getElementById('barcodeDisplay');
+  if (resultArea && barcodeDisplay) {
+    resultArea.style.display = 'none';
+    barcodeDisplay.style.display = 'block';
+    document.getElementById('barcodeNumber').textContent = fullCode;
+    generateBarcode(fullCode);
+  }
+}
+
+// ====== 取消并返回输入页 ======
+function cancelManualConfirm() {
+  const resultArea = document.getElementById('resultArea');
+  const barcodeDisplay = document.getElementById('barcodeDisplay');
+  const container = document.getElementById('kuaidi100-container');
+  const iframe = document.getElementById('kuaidi-frame');
+  const apiSourceItem = document.getElementById('apiSourceItem');
+  const conflictStatus = document.getElementById('conflictStatus');
+
+  if (iframe) iframe.src = '';
+  if (container) container.style.display = 'none';
+  if (apiSourceItem) apiSourceItem.style.display = 'none';
+
+  if (conflictStatus) {
+    conflictStatus.textContent = '已取消，返回输入页';
+  }
+
+  if (resultArea) resultArea.style.display = 'none';
+  if (barcodeDisplay) barcodeDisplay.style.display = 'none';
+
+  // 将焦点返回到当前模式的输入框，便于重新操作
+  const validateModeVisible = document.getElementById('validateMode').style.display !== 'none';
+  if (validateModeVisible) {
+    const input = document.getElementById('barcodeInput');
+    if (input) input.focus();
+  } else {
+    const seq = document.getElementById('sequenceNum');
+    if (seq) seq.focus();
+  }
+}
+
+// ====== 格式化细节信息显示 ======
+function formatBarcodeDetails(details) {
+  let html = '<table style="width:100%; border-collapse:collapse; font-size:14px; margin-top:12px;">';
+  for (const [key, value] of Object.entries(details)) {
+    html += `<tr style="border-bottom:1px solid #e0e0e0;">
+      <td style="padding:8px; font-weight:bold; width:30%; color:var(--green);">${key}</td>
+      <td style="padding:8px; color:#333;">${value}</td>
+    </tr>`;
+  }
+  html += '</table>';
+  return html;
+}
+
+// ====== 处理验证条码 ======
+async function handleBarcodeValidate() {
+  const input = document.getElementById('barcodeInput').value;
+  const resultArea = document.getElementById('resultArea');
+  const validateStatus = document.getElementById('validateStatus');
+  const conflictCheckItem = document.getElementById('conflictCheckItem');
+  const conflictStatus = document.getElementById('conflictStatus');
+  const barcodeDisplay = document.getElementById('barcodeDisplay');
+
+  if (!input.trim()) {
+    alert('请输入邮政条码');
+    return;
+  }
+
+  // 显示结果区域
+  resultArea.style.display = 'block';
+  barcodeDisplay.style.display = 'none';
+  validateStatus.innerHTML = '单号校验中...';
+  conflictCheckItem.style.display = 'none';
+
+  // 第一步：校验条码
+  await new Promise(resolve => setTimeout(resolve, 800));
+
+  const validateResult = validateChinaPostBarcode(input);
+  
+  if (!validateResult.ok) {
+    validateStatus.innerHTML = `❌ 单号校验失败：<br><span style="font-size:13px; color:#666; margin-top:6px; display:block;">${validateResult.message || validateResult.reason || '未知错误'}</span><br><span style="font-size:12px; color:#999; margin-top:8px;">💡 调试信息已输出到控制台(F12查看)</span>`;
+    console.log('[验证失败详情]', validateResult);
+    return;
+  }
+
+  // 校验通过 - 显示详细信息
+  const detailsHtml = formatBarcodeDetails(validateResult.details);
+  validateStatus.innerHTML = `✅ 单号校验成功！${detailsHtml}`;
+  
+  // 第二步：冲突查询
+  conflictCheckItem.style.display = 'block';
+  conflictStatus.textContent = '正在查询物流数据库...（最多5秒）';
+
+  const conflictResult = await checkBarcodeConflict(validateResult.fullCode);
+
+  if (conflictResult.conflicted) {
+    // 单号冲突 - 无法使用
+    conflictStatus.innerHTML = `❌ <strong>${conflictResult.message}</strong><br><span style="font-size:12px;">检测到此条码号正在运输中，不能重复使用</span>`;
+    return;
+  }
+
+  // 如果为嵌入式查询，要求用户手动确认后再继续
+  if (conflictResult.embedded && conflictResult.requireManualConfirm) {
+    conflictStatus.innerHTML = `${conflictResult.message}
+    <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+      <button onclick="proceedAfterManualConfirm('${validateResult.fullCode}')" style="padding:8px 16px; background:#28a745; color:white; border:none; border-radius:4px; cursor:pointer; font-size:13px;">
+        ✅ 我已确认无在途物流，继续
+      </button>
+      <button onclick="cancelManualConfirm()" style="padding:8px 16px; background:#dc3545; color:white; border:none; border-radius:4px; cursor:pointer; font-size:13px;">
+        ❌ 有在途物流，取消并返回
+      </button>
+    </div>`;
+
+    // 显示API来源
+    const apiSourceItem = document.getElementById('apiSourceItem');
+    const apiSourceDisplay = document.getElementById('apiSourceDisplay');
+    if (apiSourceItem && apiSourceDisplay) {
+      apiSourceItem.style.display = 'block';
+      apiSourceDisplay.textContent = conflictResult.apiSource;
+    }
+    return;
+  }
+
+  // 如果是诊断信息（API查询失败），显示诊断帮助和操作选项
+  if (conflictResult.isDiagnosis) {
+    const kuaidi100Url = `https://www.kuaidi100.com/chaxun?nu=${validateResult.fullCode}`;
+    conflictStatus.innerHTML = `<span style="color:#f39c12; white-space: pre-wrap; font-size:12px;">${conflictResult.message}</span>
+    <div style="margin-top:12px; padding:12px; background:#fff3cd; border-radius:4px; font-size:12px; color:#856404;">
+      <strong>⚠️ 由于浏览器CORS限制，无法直接查询物流API</strong><br><br>
+      <strong>请选择以下操作：</strong><br>
+      <div style="margin-top:10px; display: flex; gap: 8px; flex-wrap: wrap;">
+        <button onclick="window.open('${kuaidi100Url}', '_blank')" style="padding:8px 16px; background:#0066cc; color:white; border:none; border-radius:4px; cursor:pointer; font-size:13px;">
+          🔍 在快递100手动查询
+        </button>
+        <button onclick="document.getElementById('resultArea').style.display='none'; document.getElementById('barcodeDisplay').style.display='block'; document.getElementById('barcodeNumber').textContent='${validateResult.fullCode}'; generateBarcode('${validateResult.fullCode}');" style="padding:8px 16px; background:#28a745; color:white; border:none; border-radius:4px; cursor:pointer; font-size:13px;">
+          ✅ 跳过查询，直接生成条码
+        </button>
+      </div>
+      <div style="margin-top:10px; font-size:11px; color:#666;">
+        提示：点击"手动查询"后，如果显示无物流信息，则可放心生成条码
+      </div>
+    </div>`;
+    console.log('[诊断] API日志:', conflictResult.apiLog);
+    console.log('[用户提示] 已提供手动查询和跳过选项');
+    return;
+  }
+
+  if (!conflictResult.ok) {
+    // 查询出错但条码格式有效
+    conflictStatus.innerHTML = `⚠ ${conflictResult.message}`;
+  } else {
+    // 查询成功且无冲突
+    conflictStatus.innerHTML = `✅ ${conflictResult.message}`;
+  }
+  
+  // 显示API来源
+  const apiSourceItem = document.getElementById('apiSourceItem');
+  const apiSourceDisplay = document.getElementById('apiSourceDisplay');
+  if (apiSourceItem && apiSourceDisplay && conflictResult.apiSource) {
+    apiSourceItem.style.display = 'block';
+    apiSourceDisplay.textContent = conflictResult.apiSource;
+  }
+
+  // 等待后再显示条码
+  await new Promise(resolve => setTimeout(resolve, 1200));
+
+  // 隐藏状态，显示条码
+  resultArea.style.display = 'none';
+  barcodeDisplay.style.display = 'block';
+  document.getElementById('barcodeNumber').textContent = validateResult.fullCode;
+  generateBarcode(validateResult.fullCode);
+  
+  // 输出验证信息到控制台
+  console.log('[验证成功]', {
+    条码: validateResult.fullCode,
+    业务代码: validateResult.businessType,
+    邮件类型: validateResult.mailType,
+    序列号: validateResult.sequenceNum,
+    校验码: `${validateResult.given}（计算值：${validateResult.computed}）`,
+    省份: validateResult.provinceCode,
+    物流查询API: conflictResult.apiSource,
+    物流状态: conflictResult.ok ? '无冲突' : '有问题'
+  });
+}
+
+// ====== 处理生成条码 ======
+async function handleBarcodeGenerate() {
+  const resultArea = document.getElementById('resultArea');
+  const validateStatus = document.getElementById('validateStatus');
+  const conflictCheckItem = document.getElementById('conflictCheckItem');
+  const conflictStatus = document.getElementById('conflictStatus');
+  const barcodeDisplay = document.getElementById('barcodeDisplay');
+
+  // 生成条码
+  const generateResult = generateBarcodeFromInput();
+  
+  if (!generateResult.ok) {
+    alert(generateResult.message);
+    return;
+  }
+
+  // 显示结果区域
+  resultArea.style.display = 'block';
+  barcodeDisplay.style.display = 'none';
+  validateStatus.innerHTML = '正在生成条码...';
+  conflictCheckItem.style.display = 'none';
+
+  // 等待
+  await new Promise(resolve => setTimeout(resolve, 600));
+
+  // 显示生成的条码详情
+  const detailsHtml = formatBarcodeDetails(generateResult.details);
+  validateStatus.innerHTML = `✅ 条码生成成功！${detailsHtml}`;
+  
+  // 第二步：冲突查询
+  conflictCheckItem.style.display = 'block';
+  conflictStatus.textContent = '正在查询物流数据库...（最多5秒）';
+
+  const conflictResult = await checkBarcodeConflict(generateResult.fullCode);
+
+  if (conflictResult.conflicted) {
+    // 单号冲突 - 无法使用
+    conflictStatus.innerHTML = `❌ <strong>${conflictResult.message}</strong><br><span style="font-size:12px;">检测到此条码号正在运输中，请重新生成</span>`;
+    return;
+  }
+
+  // 如果为嵌入式查询，要求用户手动确认后再继续
+  if (conflictResult.embedded && conflictResult.requireManualConfirm) {
+    conflictStatus.innerHTML = `${conflictResult.message}
+    <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+      <button onclick="proceedAfterManualConfirm('${generateResult.fullCode}')" style="padding:8px 16px; background:#28a745; color:white; border:none; border-radius:4px; cursor:pointer; font-size:13px;">
+        ✅ 我已确认无在途物流，继续
+      </button>
+      <button onclick="cancelManualConfirm()" style="padding:8px 16px; background:#dc3545; color:white; border:none; border-radius:4px; cursor:pointer; font-size:13px;">
+        ❌ 有在途物流，取消并返回
+      </button>
+    </div>`;
+
+    // 显示API来源
+    const apiSourceItem = document.getElementById('apiSourceItem');
+    const apiSourceDisplay = document.getElementById('apiSourceDisplay');
+    if (apiSourceItem && apiSourceDisplay) {
+      apiSourceItem.style.display = 'block';
+      apiSourceDisplay.textContent = conflictResult.apiSource;
+    }
+    return;
+  }
+
+  // 如果是CORS诊断信息，提供手动查询和跳过选项
+  if (conflictResult.isDiagnosis) {
+    const kuaidi100Url = `https://www.kuaidi100.com/chaxun?nu=${generateResult.fullCode}`;
+    conflictStatus.innerHTML = `<span style="color:#f39c12; white-space: pre-wrap; font-size:12px;">${conflictResult.message}</span>
+    <div style="margin-top:12px; padding:12px; background:#fff3cd; border-radius:4px; font-size:12px; color:#856404;">
+      <strong>⚠️ 由于浏览器CORS限制，无法直接查询物流API</strong><br><br>
+      <strong>请选择以下操作：</strong><br>
+      <div style="margin-top:10px; display: flex; gap: 8px; flex-wrap: wrap;">
+        <button onclick="window.open('${kuaidi100Url}', '_blank')" style="padding:8px 16px; background:#0066cc; color:white; border:none; border-radius:4px; cursor:pointer; font-size:13px;">
+          🔍 在快递100手动查询
+        </button>
+        <button onclick="document.getElementById('resultArea').style.display='none'; document.getElementById('barcodeDisplay').style.display='block'; document.getElementById('barcodeNumber').textContent='${generateResult.fullCode}'; generateBarcode('${generateResult.fullCode}');" style="padding:8px 16px; background:#28a745; color:white; border:none; border-radius:4px; cursor:pointer; font-size:13px;">
+          ✅ 跳过查询，直接生成条码
+        </button>
+      </div>
+      <div style="margin-top:10px; font-size:11px; color:#666;">
+        提示：点击"手动查询"后，如果显示无物流信息，则可放心生成条码
+      </div>
+    </div>`;
+    console.log('[诊断] API日志:', conflictResult.apiLog);
+    console.log('[用户提示] 已提供手动查询和跳过选项');
+    return;
+  }
+
+  if (!conflictResult.ok) {
+    // 查询出错但条码格式有效
+    conflictStatus.innerHTML = `⚠ ${conflictResult.message}`;
+  } else {
+    // 查询成功且无冲突
+    conflictStatus.innerHTML = `✅ ${conflictResult.message}`;
+  }
+  
+  // 显示API来源
+  const apiSourceItem = document.getElementById('apiSourceItem');
+  const apiSourceDisplay = document.getElementById('apiSourceDisplay');
+  if (apiSourceItem && apiSourceDisplay && conflictResult.apiSource) {
+    apiSourceItem.style.display = 'block';
+    apiSourceDisplay.textContent = conflictResult.apiSource;
+  }
+
+  // 等待后再显示条码
+  await new Promise(resolve => setTimeout(resolve, 1200));
+
+  // 隐藏状态，显示条码
+  resultArea.style.display = 'none';
+  barcodeDisplay.style.display = 'block';
+  document.getElementById('barcodeNumber').textContent = generateResult.fullCode;
+  generateBarcode(generateResult.fullCode);
+  
+  // 输出生成信息到控制台
+  console.log('[生成成功]', {
+    条码: generateResult.fullCode,
+    业务代码: generateResult.businessType,
+    邮件类型: generateResult.mailType,
+    序列号: generateResult.sequenceNum,
+    校验码: generateResult.checkDigit,
+    省份: generateResult.provinceCode,
+    物流查询API: conflictResult.apiSource,
+    冲突状态: conflictResult.conflicted ? '冲突' : '可用'
+  });
+}
+
+<!-- 将页面底部的 DOMContentLoaded 事件绑定替换为下面正确的代码块 -->
+document.addEventListener('DOMContentLoaded', function() {
+  // 验证模式事件
+  document.getElementById('confirmBtn').addEventListener('click', handleBarcodeValidate);
+  document.getElementById('barcodeInput').addEventListener('keypress', function(event) {
+    if (event.key === 'Enter') {
+      handleBarcodeValidate();
+    }
+  });
+
+  // 生成模式事件
+  document.getElementById('generateConfirmBtn').addEventListener('click', handleBarcodeGenerate);
+
+  // 业务种类代码：选择和自定义的交互
+  document.getElementById('businessType').addEventListener('change', function() {
+    if (this.value) {
+      document.getElementById('businessTypeCustom').value = '';
+    }
+  });
+
+  document.getElementById('businessTypeCustom').addEventListener('input', function() {
+    if (this.value) {
+      document.getElementById('businessType').value = '';
+    }
+  });
+
+  // 省别代码：选择和自定义的交互
+  document.getElementById('provinceCode').addEventListener('change', function() {
+    if (this.value) {
+      document.getElementById('provinceCodeCustom').value = '';
+    }
+  });
+
+  document.getElementById('provinceCodeCustom').addEventListener('input', function() {
+    if (this.value) {
+      document.getElementById('provinceCode').value = '';
+    }
+  });
+});
+</script>
+
+</body>
+</html>

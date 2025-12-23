@@ -37,7 +37,7 @@ nav {
     box-shadow: 0 2px 12px #e0e0e0;
     position: sticky;
     top: 0;
-    z-index: 10;
+    z-index: 2000; /* keep above Leaflet map panes */
 }
 nav .tab {
     color: var(--white);
@@ -53,6 +53,33 @@ nav .tab {
     text-decoration: none;
     display: inline-block;
     text-align: center;
+    word-break: keep-all;
+    white-space: nowrap;
+}
+
+/* 窄屏：不改字号，只通过宽度强制两字换行 */
+@media (max-width: 768px) {
+    nav .tab {
+        padding: 12px 18px;
+        font-size: 20px; /* 保持原字号 */
+        max-width: 48px; /* 约两字宽，促成“两字一行” */
+        white-space: normal;
+        word-break: break-all;
+        line-height: 1.3;
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    nav .tab {
+        padding: 10px 12px;
+        font-size: 20px; /* 保持原字号 */
+        max-width: 44px; /* 略紧凑，仍两字一行 */
+        white-space: normal;
+        word-break: break-all;
+        line-height: 1.3;
+        text-align: center;
+    }
 }
 nav .tab.active, nav .tab:hover {
     background: var(--yellow);
@@ -131,6 +158,15 @@ h2 {
 .card-desc {
     color: #444;
     font-size: 1em;
+    margin: 0;
+}
+.card-desc ul {
+    padding-left: 16px; /* reduce default indent */
+    margin: 8px 0;
+}
+.card-desc li {
+    margin: 4px 0;
+    padding-left: 0;
 }
 /* 邮资计算器样式 */
 .calc-form {
@@ -209,6 +245,8 @@ h2 {
     main { padding: 8px 2vw; }
     .calc-form { padding: 18px 6px; }
 }
+
+/* 移除旧的nav响应式规则，已在上方统一处理 */
 footer {
     text-align: center;
     color: #888;
@@ -283,4 +321,293 @@ a:hover {
     color: #333; /* 普通文字颜色 */
     margin-top: 0; /* 覆盖.calc-form label的上边距 */
     cursor: pointer;
+}
+
+/* ====== 条码打印页面样式 ====== */
+
+/* 模式选择选项卡 */
+.mode-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+.mode-tab {
+    padding: 12px 28px;
+    border: 2px solid var(--green);
+    background: var(--white);
+    color: var(--green);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.mode-tab:hover {
+    background: var(--light-green);
+    color: var(--white);
+}
+
+.mode-tab.active {
+    background: var(--green);
+    color: var(--white);
+    box-shadow: 0 4px 12px rgba(0, 102, 51, 0.3);
+}
+
+.mode-container {
+    animation: fadeInMode 0.5s ease;
+}
+
+@keyframes fadeInMode {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.barcode-form {
+    background: #f1f8e9;
+    border-radius: 12px;
+    padding: 32px 24px;
+    box-shadow: 0 2px 12px #e0e0e0;
+    max-width: 550px;
+    margin: 0 auto 32px auto;
+    text-align: center;
+}
+
+.barcode-form label {
+    font-weight: bold;
+    color: var(--green);
+    margin-bottom: 12px;
+    display: block;
+    font-size: 16px;
+}
+
+.barcode-form input {
+    padding: 12px;
+    font-size: 16px;
+    margin: 12px 0 18px 0;
+    border-radius: 6px;
+    border: 2px solid var(--green);
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.3s;
+}
+
+.barcode-form input:focus {
+    outline: none;
+    border-color: var(--yellow);
+    box-shadow: 0 0 8px rgba(249, 225, 26, 0.3);
+}
+
+.barcode-form select {
+    padding: 12px;
+    font-size: 16px;
+    margin: 12px 0 6px 0;
+    border-radius: 6px;
+    border: 2px solid var(--green);
+    width: 100%;
+    box-sizing: border-box;
+    transition: border-color 0.3s;
+    background: var(--white);
+    color: #333;
+    cursor: pointer;
+}
+
+.barcode-form select:focus {
+    outline: none;
+    border-color: var(--yellow);
+    box-shadow: 0 0 8px rgba(249, 225, 26, 0.3);
+}
+
+.confirm-btn {
+    display: inline-block;
+    background: var(--green);
+    color: var(--white);
+    border: none;
+    padding: 14px 48px;
+    border-radius: 6px;
+    font-size: 18px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s;
+    margin-top: 8px;
+}
+
+.confirm-btn:hover {
+    background: var(--light-green);
+    transform: scale(1.05);
+    box-shadow: 0 4px 16px rgba(0, 102, 51, 0.3);
+}
+
+.confirm-btn:active {
+    transform: scale(0.98);
+}
+
+/* 校验结果显示区 */
+.result-area {
+    background: #fff9c4;
+    border-left: 4px solid var(--yellow);
+    border-radius: 8px;
+    padding: 24px;
+    margin: 24px auto;
+    max-width: 600px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.status-item {
+    margin: 12px 0;
+    font-size: 18px;
+    font-weight: bold;
+    color: var(--green);
+    animation: fadeIn 0.6s ease;
+}
+
+.status-text {
+    display: inline-block;
+    padding: 8px 12px;
+    border-radius: 4px;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* 条码显示区 */
+.barcode-display {
+    background: var(--white);
+    border: 2px solid var(--green);
+    border-radius: 12px;
+    padding: 32px;
+    max-width: 600px;
+    margin: 32px auto;
+    box-shadow: var(--shadow);
+    text-align: center;
+}
+
+.barcode-info {
+    margin-bottom: 24px;
+}
+
+.barcode-info p {
+    font-size: 18px;
+    color: #333;
+    margin: 0;
+}
+
+.barcode-info strong {
+    color: var(--green);
+    font-size: 20px;
+}
+
+.barcode-container {
+    background: var(--white);
+    border: 1px solid #e0e0e0;
+    padding: 24px;
+    border-radius: 8px;
+    margin: 24px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.barcode-container svg {
+    margin-bottom: 12px;
+}
+
+.barcode-text {
+    font-size: 18px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    color: #000;
+    font-family: 'Courier New', monospace;
+}
+
+.print-button-area {
+    margin-top: 24px;
+    display: flex;
+    gap: 12px;
+}
+
+.print-btn {
+    background: var(--green);
+    color: var(--white);
+    border: none;
+    padding: 12px 32px;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s;
+}
+
+.print-btn:hover {
+    background: var(--light-green);
+    transform: scale(1.05);
+    box-shadow: 0 4px 16px rgba(0, 102, 51, 0.3);
+}
+
+.download-btn {
+    background: var(--light-green);
+    color: var(--white);
+    border: none;
+    padding: 12px 32px;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.2s;
+}
+
+.download-btn:hover {
+    background: var(--green);
+    transform: scale(1.05);
+    box-shadow: 0 4px 16px rgba(0, 153, 68, 0.3);
+}
+
+/* 打印样式 */
+@media print {
+    body, header, nav, footer, main {
+        background: white;
+        box-shadow: none;
+        margin: 0;
+        padding: 0;
+    }
+    
+    main {
+        max-width: 100%;
+        margin: 0;
+        padding: 20px;
+        min-height: auto;
+    }
+    
+    .barcode-form, .print-button-area, section h2 {
+        display: none;
+    }
+    
+    .barcode-display {
+        border: 1px solid #000;
+        box-shadow: none;
+        margin: 0;
+        padding: 20px;
+    }
+    
+    .barcode-container {
+        border: 1px dashed #000;
+        padding: 15px;
+    }
 }
