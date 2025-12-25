@@ -45,12 +45,14 @@
             <!-- 模式2：地址查邮编 -->
             <div id="addressToCodeMode" class="mode-container" style="display: none;">
                 <div class="barcode-form">
-                    <label>选择省市（可选，推荐加速查询）：</label>
+                    <label>选择省市区：</label>
                     <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px;">
                       <select id="provinceSelect" style="min-width:160px;"><option value="">请选择省份</option></select>
                       <select id="citySelect" style="min-width:160px;"><option value="">请选择城市</option></select>
+                      <!-- 新增区/县下拉（只在有三级索引时会被填充） -->
+                      <select id="districtSelect" style="min-width:160px;"><option value="">请选择区/县</option></select>
                     </div>
-                    <label for="addressInput">输入地址关键词：</label>
+                    <label for="addressInput">输入详细地址：</label>
                     <input type="text" id="addressInput" placeholder="例如：桂林路100号 或 师范大学邮政所">
                     <div style="font-size:12px; color:#666; margin-top:8px; text-align:left;">
                         💡 支持智能分词：输入"辽宁省沈阳市和睦路"会自动识别为"辽宁省"+"沈阳市"+"和睦路"<br>
@@ -82,6 +84,9 @@
 <!-- 省市索引与城市前缀映射（用于高效缩小查询范围） -->
 <script src="code/province_city_list.js"></script>
 <script src="code/province_city_prefixes.js"></script>
+<!-- 如果你生成了三级索引（省-市-区），可以在 code/ 中放置这两个文件，脚本会优先使用它们（可选） -->
+<script src="code/province_city_area_list.js"></script>
+<script src="code/province_city_area_prefixes.js"></script>
 
 <script>
 // ====== 模式切换函数 ======
@@ -375,23 +380,48 @@ function smartSegmentation(input) {
 function initProvinceCityDropdowns() {
   const provSel = document.getElementById('provinceSelect');
   const citySel = document.getElementById('citySelect');
-  if (!provSel || !citySel) return;
+  const distSel = document.getElementById('districtSelect');
+  if (!provSel || !citySel || !distSel) return;
 
-  const data = (window.PROVINCE_CITY_LIST) || {};
-  // 省份选项
+  // 支持两套索引：
+  // 1) window.PROVINCE_CITY_AREA_LIST / _PREFIXES （优先，如果存在）
+  // 2) fallback 到旧的 window.PROVINCE_CITY_LIST / _PREFIXES
+  const areaData = window.PROVINCE_CITY_AREA_LIST || null;
+  const cityData = window.PROVINCE_CITY_LIST || {};
+  const provinces = areaData ? Object.keys(areaData) : Object.keys(cityData);
+
   provSel.innerHTML = '<option value="">请选择省份</option>' +
-    Object.keys(data).map(p => `<option value="${p}">${p}</option>`).join('');
-
-  // 城市重置
-  const resetCities = () => citySel.innerHTML = '<option value="">请选择城市</option>';
-  resetCities();
+    provinces.map(p => `<option value="${p}">${p}</option>`).join('');
+  citySel.innerHTML = '<option value="">请选择城市</option>';
+  distSel.innerHTML = '<option value="">请选择区/县</option>';
 
   provSel.addEventListener('change', () => {
     const p = provSel.value;
-    resetCities();
-    if (p && data[p]) {
+    citySel.innerHTML = '<option value="">请选择城市</option>';
+    distSel.innerHTML = '<option value="">请选择区/县</option>';
+
+    if (areaData && p && areaData[p]) {
+      // 使用三级索引时填充城市，并保留空区选项
       citySel.innerHTML = '<option value="">请选择城市</option>' +
-        data[p].map(c => `<option value="${c}">${c}</option>`).join('');
+        Object.keys(areaData[p]).map(c => `<option value="${c}">${c}</option>`).join('');
+    } else if (!areaData && p && cityData[p]) {
+      // 老索引：省->城市列表
+      citySel.innerHTML = '<option value="">请选择城市</option>' +
+        cityData[p].map(c => `<option value="${c}">${c}</option>`).join('');
+    }
+  });
+
+  citySel.addEventListener('change', () => {
+    const p = provSel.value;
+    const c = citySel.value;
+    distSel.innerHTML = '<option value="">请选择区/县</option>';
+
+    if (areaData && p && c && areaData[p] && areaData[p][c]) {
+      const areas = areaData[p][c];
+      if (areas && areas.length > 0) {
+        distSel.innerHTML = '<option value="">请选择区/县</option>' +
+          areas.map(a => `<option value="${a}">${a}</option>`).join('');
+      }
     }
   });
 }
@@ -475,7 +505,7 @@ function calculateRelevance(item, searchKeywords, expandedKeywords) {
   return score;
 }
 
-// ====== 地址查邮编（智能搜索） ======
+// ====== 地址查邮编（智能搜索，已扩展为支持区选择） ======
 async function queryByAddress() {
   const keywords = document.getElementById('addressInput').value.trim();
   const resultArea = document.getElementById('queryResult');
@@ -509,35 +539,45 @@ async function queryByAddress() {
       .filter(k => k.length > 0);
     console.log('📚 扩展关键词:', expandedKeywords);
     
-    // 智能识别省份/城市，缩小搜索范围（优先使用下拉选择）
+    // 智能识别省份/城市/区，缩小搜索范围（优先使用下拉选择）
     let targetPrefixes = [];
     let foundProvince = null;
     let foundCity = null;
+    let foundDistrict = null;
 
     const provSel = document.getElementById('provinceSelect');
     const citySel = document.getElementById('citySelect');
+    const distSel = document.getElementById('districtSelect');
     const selProvince = provSel && provSel.value ? provSel.value : '';
     const selCity = citySel && citySel.value ? citySel.value : '';
-    const PREFIXES = (window.PROVINCE_CITY_PREFIXES) || {};
-    
-    // 1) 下拉优先
-    if (selProvince && PREFIXES[selProvince]) {
-      if (selCity && PREFIXES[selProvince][selCity]) {
-        targetPrefixes = PREFIXES[selProvince][selCity];
-        foundProvince = selProvince; foundCity = selCity;
-        console.log(`✅ 使用选择的省市: ${selProvince}·${selCity} → 前缀:`, targetPrefixes);
-      } else {
-        // 未选市，聚合该省全部城市的4位前缀
-        targetPrefixes = Object.values(PREFIXES[selProvince]).flat();
-        foundProvince = selProvince;
-        console.log(`✅ 使用选择的省: ${selProvince}（未选市），聚合前缀数量: ${targetPrefixes.length}`);
-      }
+    const selDistrict = distSel && distSel.value ? distSel.value : '';
+
+    // 支持两套前缀数据结构：
+    // - window.PROVINCE_CITY_AREA_PREFIXES: prov -> city -> area -> [prefix4]
+    // - window.PROVINCE_CITY_PREFIXES: prov -> city -> [prefix4]
+    const AREA_PREFIXES = window.PROVINCE_CITY_AREA_PREFIXES || null;
+    const PREFIXES = window.PROVINCE_CITY_PREFIXES || {};
+
+    // 1) 下拉优先：如果选择了区并且存在三级索引 -> 使用区级前缀（最精确）
+    if (selProvince && selCity && selDistrict && AREA_PREFIXES && AREA_PREFIXES[selProvince] && AREA_PREFIXES[selProvince][selCity] && AREA_PREFIXES[selProvince][selCity][selDistrict]) {
+      targetPrefixes = AREA_PREFIXES[selProvince][selCity][selDistrict];
+      foundProvince = selProvince; foundCity = selCity; foundDistrict = selDistrict;
+      console.log(`✅ 使用选择的省市区: ${selProvince}·${selCity}·${selDistrict} → 前缀:`, targetPrefixes);
+    } else if (selProvince && selCity && PREFIXES && PREFIXES[selProvince] && PREFIXES[selProvince][selCity]) {
+      // 2) 若有省+市（使用两级索引）
+      targetPrefixes = PREFIXES[selProvince][selCity];
+      foundProvince = selProvince; foundCity = selCity;
+      console.log(`✅ 使用选择的省市: ${selProvince}·${selCity} → 前缀:`, targetPrefixes);
+    } else if (selProvince && PREFIXES && PREFIXES[selProvince]) {
+      // 3) 仅选省：聚合该省全部城市的4位前缀
+      targetPrefixes = Object.values(PREFIXES[selProvince]).flat();
+      foundProvince = selProvince;
+      console.log(`✅ 使用选择的省: ${selProvince}（未选市），聚合前缀数量: ${targetPrefixes.length}`);
     }
 
-    // 2) 未选择时，从关键词中识别省/市
+    // 2) 未通过下拉确定前缀时，从关键词中识别省/市/区（优先区识别）
     if (targetPrefixes.length === 0) {
-      // 识别省
-      const ALL_PROVS = Object.keys(PREFIXES);
+      const ALL_PROVS = AREA_PREFIXES ? Object.keys(AREA_PREFIXES) : Object.keys(PREFIXES);
       for (const kw of searchKeywords) {
         const kwBase = canonName(kw);
         const provHit = ALL_PROVS.find(p => {
@@ -551,41 +591,74 @@ async function queryByAddress() {
       }
 
       if (foundProvince) {
-        // 识别市
-        const ALL_CITIES = Object.keys(PREFIXES[foundProvince] || {});
-        for (const kw of searchKeywords) {
-          const kwBase = canonName(kw);
-          const cityHit = ALL_CITIES.find(c => {
-            const cBase = canonName(c);
-            return kwBase.includes(cBase) || cBase.includes(kwBase);
-          });
-          if (cityHit) {
-            foundCity = cityHit;
-            break;
+        // 如果存在三级前缀数据，优先尝试识别市与区
+        if (AREA_PREFIXES && AREA_PREFIXES[foundProvince]) {
+          const ALL_CITIES = Object.keys(AREA_PREFIXES[foundProvince] || {});
+          for (const kw of searchKeywords) {
+            const kwBase = canonName(kw);
+            const cityHit = ALL_CITIES.find(c => {
+              const cBase = canonName(c);
+              return kwBase.includes(cBase) || cBase.includes(kwBase);
+            });
+            if (cityHit) { foundCity = cityHit; break; }
           }
-        }
-
-        if (foundCity) {
-          targetPrefixes = PREFIXES[foundProvince][foundCity] || [];
-          console.log(`✅ 识别到城市: ${foundProvince}·${foundCity} → 前缀:`, targetPrefixes);
+          if (foundCity) {
+            const ALL_DISTS = Object.keys(AREA_PREFIXES[foundProvince][foundCity] || {});
+            for (const kw of searchKeywords) {
+              const kwBase = canonName(kw);
+              const distHit = ALL_DISTS.find(a => {
+                const aBase = canonName(a);
+                return kwBase.includes(aBase) || aBase.includes(kwBase);
+              });
+              if (distHit) { foundDistrict = distHit; break; }
+            }
+            if (foundDistrict) {
+              targetPrefixes = AREA_PREFIXES[foundProvince][foundCity][foundDistrict] || [];
+              console.log(`✅ 关键词识别到区: ${foundProvince}·${foundCity}·${foundDistrict} → 前缀:`, targetPrefixes);
+            } else {
+              // 识别到市但未识别区，聚合该市所有区的前缀
+              targetPrefixes = Object.values(AREA_PREFIXES[foundProvince][foundCity] || {}).flat();
+              console.log(`✅ 关键词识别到市: ${foundProvince}·${foundCity} → 聚合前缀: ${targetPrefixes.length}`);
+            }
+          } else {
+            // 识别到省但未识别市：聚合省全部前缀
+            targetPrefixes = Object.values(AREA_PREFIXES[foundProvince]).map(m => Object.values(m).flat()).flat();
+            console.log(`✅ 关键词识别到省（三级索引）：${foundProvince} → 聚合前缀数量: ${targetPrefixes.length}`);
+          }
         } else {
-          targetPrefixes = Object.values(PREFIXES[foundProvince] || {}).flat();
-          console.log(`✅ 识别到省份: ${foundProvince}（未识别市），聚合前缀数量: ${targetPrefixes.length}`);
+          // 没有三级索引，使用两级 PREFIXES
+          const ALL_CITIES = Object.keys(PREFIXES[foundProvince] || {});
+          for (const kw of searchKeywords) {
+            const kwBase = canonName(kw);
+            const cityHit = ALL_CITIES.find(c => {
+              const cBase = canonName(c);
+              return kwBase.includes(cBase) || cBase.includes(kwBase);
+            });
+            if (cityHit) { foundCity = cityHit; break; }
+          }
+          if (foundCity) {
+            targetPrefixes = PREFIXES[foundProvince][foundCity] || [];
+            console.log(`✅ 关键词识别到市（两级索引）: ${foundProvince}·${foundCity} → 前缀:`, targetPrefixes);
+          } else {
+            targetPrefixes = Object.values(PREFIXES[foundProvince] || {}).flat();
+            console.log(`✅ 关键词识别到省（两级索引）: ${foundProvince} → 聚合前缀数量: ${targetPrefixes.length}`);
+          }
         }
       }
     }
     
     // 若仍未识别任何前缀，提示用户选择省市以避免超大范围检索
     if (targetPrefixes.length === 0) {
-      resultContent.innerHTML = '<p style="text-align:center; color:#f39c12;">⚠️ 为了效率，请先选择省份（可选城市更佳），再输入关键词进行查询。</p>';
+      resultContent.innerHTML = '<p style="text-align:center; color:#f39c12;">⚠️ 为了效率，请先选择省市区，再输入关键词进行查询。</p>';
       return;
     }
     
     // 生成完整的6位邮编列表：
-    // - 若是4位前缀（精确到城市），只枚举后两位 00-99（每前缀 100 个文件）
+    // - 若是4位前缀（精确到城市/区），只枚举后两位 00-99（每前缀 100 个文件）
     // - 若是2位前缀（理论上不再使用；若遇到则回退生成 0000-9999）
     const allPostcodes = [];
     for (const prefix of targetPrefixes) {
+      if (!prefix) continue;
       if (prefix.length === 4) {
         for (let e = 0; e <= 9; e++) {
           for (let f = 0; f <= 9; f++) {
