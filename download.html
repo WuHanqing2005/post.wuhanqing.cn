@@ -9,6 +9,43 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=ZCOOL+XiaoWei&display=swap" rel="stylesheet">
+    <style>
+        .download-card {
+            background: #f9f9f9;
+            border: 2px solid #007d32; /* 邮政绿 */
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .app-icon {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 15px;
+            border-radius: 15px;
+        }
+        .download-button {
+            display: inline-block;
+            background-color: #007d32;
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 25px;
+            font-size: 18px;
+            font-weight: bold;
+            transition: 0.3s;
+            margin-top: 15px;
+        }
+        .download-button:hover {
+            background-color: #005a24;
+            transform: scale(1.05);
+        }
+        .version-info {
+            color: #666;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
     <header>
@@ -20,44 +57,31 @@
         <a class="tab" href="calculator.html">邮资计算</a>
         <a class="tab" href="makecode.html">打印条码</a>
         <a class="tab" href="postcode.html">邮编查询</a>
-        <a class="tab active" href="download.html">资料下载</a>
+        <a class="tab active" href="download.html">软件下载</a>
         <a class="tab" href="contact.html">联系我们</a>
     </nav>
     <main>
         <section id="download" class="active">
-            <h2>资料下载</h2>
-            <ul class="download-list">
-                <li>
-                    <a href="https://www.chinapost.com.cn/" target="_blank">
-                        中国邮政官网 / China Post Official Website
-                    </a>
-                </li>
+            <h2>APP 客户端下载</h2>
+            
+            <div class="download-card">
+                <img src="app/mail.png" alt="APP Icon" class="app-icon">
+                <h3 style="margin: 0; color: #333;">清寒邮政助手 安卓版</h3>
+                <p style="color: #666; margin: 10px 0;">随时随地查询邮资，更便捷的邮政小工具</p>
                 
-                <li>
-                    <a href="https://www.chinapost.com.cn/xhtml1/report/19101/1959-1.htm" target="_blank">
-                        国际函件资费表（中国邮政官方） / International Letter Post Rate Table
-                    </a>
-                </li>
+                <a href="app/app-debug.apk" class="download-button" download>
+                    立即下载安装包 (APK)
+                </a>
 
-                <li>
-                    <a href="https://my.ems.com.cn/pcp-web/f/pcp/indexController/toquoteindex" target="_blank">
-                        EMS 价格查询 / EMS Price Inquiry
-                    </a>
-                </li>
-                
-                <li>
-                    <a href="https://www.chinapost.com.cn/xhtml1/report/19101/1784-1.htm" target="_blank">
-                        港澳台函件资费 / Postage to HK/Macao/Taiwan
-                    </a>
-                </li>
+                <div class="version-info">
+                    版本：2025.12.25 | 大小：约 5MB | 系统：Android 5.0+
+                </div>
+            </div>
 
-                <li>
-                    <a href="https://www.17transit.com/news-show.asp?id=882" target="_blank">
-                        EMS 国际快递价格表 / China Post EMS International Rates
-                    </a>
-                </li>
-            <div style="margin-top:24px;color:#888;font-size:15px;">
-                * 所有资料均来源于中国邮政官方网站，仅供学习交流使用。
+            <div style="margin-top:30px; padding: 15px; background: #fffbe6; border: 1px dashed #ffe58f; border-radius: 8px;">
+                <p style="margin:0; font-size: 14px; color: #856404;">
+                    <strong>安装提示：</strong> 由于本APP由个人开发者打包，安装时手机可能会提示“来源未知”或“存在风险”，请选择“继续安装”即可放心使用。
+                </p>
             </div>
         </section>
     </main>
@@ -65,15 +89,11 @@
         <p>
             本站访客数 <span id="busuanzi_value_site_uv"></span> 人次
             <span style="margin: 0 10px;">|</span>
-
             本站总访问量 <span id="busuanzi_value_site_pv"></span> 次
         </p>
-
         &copy; 2025 Daniel_清寒的邮政小站 | 本站非中国邮政官方网站，仅供邮政爱好者学习与交流
     </footer>
 
-<!-- 不蒜子网站访问量统计脚本 -->
 <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
-
 </body>
 </html>
